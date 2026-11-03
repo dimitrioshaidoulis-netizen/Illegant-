@@ -67,21 +67,21 @@
     "ticket_label": "Your ticket",
     "empty_wall": "Space reserved",
     "checkout": "Checkout",
-    "title": "Cart",
+    "title": "Bag",
     "remove": "Remove: {{ title }}",
     "remove_short": "Remove",
-    "empty": "Your cart is empty.",
-    "empty_description": "Looks like you haven't added anything to your cart yet.",
+    "empty": "Your bag is empty.",
+    "empty_description": "Nothing in your bag yet.",
     "icon_label": {
-      "one": "Cart (1 item)",
-      "other": "Cart ({{ count }} items)"
+      "one": "Bag (1 item)",
+      "other": "Bag ({{ count }} items)"
     },
     "item_count": {
-      "one": "1 item in cart",
-      "other": "{{ count }} items in cart"
+      "one": "1 item in your bag",
+      "other": "{{ count }} items in your bag"
     },
-    "item_removed": "Item removed from cart",
-    "updated": "Cart updated",
+    "item_removed": "Item removed from your bag",
+    "updated": "Bag updated",
     "note_label": "Order notes",
     "note_placeholder": "Add special instructions for your order",
     "taxes_and_shipping_at_checkout": "Taxes and shipping calculated at checkout",
@@ -89,8 +89,8 @@
     "discount_savings": "(-{{ amount }})",
     "discount_code": "Discount code",
     "discount_title": "Discount: {{ title }}",
-    "update_error": "Could not update cart. Please try again.",
-    "refresh_error": "Cart updated, but the display may be out of date. Refresh the page to see the latest cart.",
+    "update_error": "Could not update your bag. Please try again.",
+    "refresh_error": "Bag updated, but the display may be out of date. Refresh the page to see the latest bag.",
     "continue_shopping": "Continue shopping",
     "checkout_description": "Proceeds to secure checkout",
     "discount_placeholder": "Enter code",
@@ -220,8 +220,8 @@
   },
   "product": {
     "quick_add": "Quick add",
-    "quick_add_size": "Add size {{ size }} of {{ title }} to cart",
-    "quick_add_one": "Add to cart",
+    "quick_add_size": "Add size {{ size }} of {{ title }} to your bag",
+    "quick_add_one": "Add to bag",
     "next_room": "Next",
     "delivery_returns": "Delivery & returns",
     "shipping_policy": "Shipping policy",
@@ -243,8 +243,8 @@
     "quantity_decrease": "Decrease quantity: {{ title }}",
     "quantity_increase": "Increase quantity: {{ title }}",
     "quantity_input": "Quantity for {{ title }}",
-    "add_to_cart": "Add to cart",
-    "added_to_cart": "Added to cart",
+    "add_to_cart": "Add to bag",
+    "added_to_cart": "Added to bag",
     "sold_out": "Sold out",
     "coming_soon": "Coming soon",
     "notify": {
@@ -336,7 +336,7 @@
       "title": "New arrivals",
       "subtitle": "Explore the collection",
       "heading": "Elegance, without permission.",
-      "cta": "Enter"
+      "cta": "Discover the collection"
     },
     "women": {
       "title": "Women",

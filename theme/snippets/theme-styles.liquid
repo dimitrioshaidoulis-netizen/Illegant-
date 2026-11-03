@@ -144,3 +144,5 @@
     }
   }
 </style>
+{%- comment -%} Flagship design layer (plain CSS, see the file header). Loaded last so it refines the compiled bundle. {%- endcomment -%}
+{{ 'illegant-flagship.css' | asset_url | stylesheet_tag }}

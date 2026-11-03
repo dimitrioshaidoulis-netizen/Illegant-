@@ -25,8 +25,12 @@
   assign lcp_sizes = '100vw'
   if template == 'index'
     # Mirrors the hero source in templates/index.liquid.
+    # Mirrors the opening in templates/index.liquid (Theme settings → Homepage → Opening).
     assign lcp_image = images['illegant-real-shadow.jpg']
-    assign lcp_sizes = '(min-width: 768px) 16vw, 40vw'
+    assign lcp_sizes = '(min-width: 768px) 34vw, 100vw'
+    if settings.home_opening == 'ring'
+      assign lcp_sizes = '(min-width: 768px) 16vw, 40vw'
+    endif
   elsif template == 'article'
     assign lcp_image = article.image
     # Mirrors the hero image `sizes` in templates/article.liquid.

@@ -305,7 +305,9 @@
       {%- if product.description != blank or product.vendor != blank or product.type != blank or product.selected_or_first_available_variant.sku != blank -%}{%- assign has_details = true -%}{%- endif -%}
       {%- assign has_policies = false -%}
       {%- if shop.shipping_policy or shop.refund_policy -%}{%- assign has_policies = true -%}{%- endif -%}
-      {%- if has_details or has_policies -%}
+      {%- comment -%} Size guide: a row only once the merchant publishes a page with the handle size-guide (no invented measurements). {%- endcomment -%}
+      {%- assign size_guide_page = pages['size-guide'] -%}
+      {%- if has_details or has_policies or size_guide_page != blank -%}
         <ul role="list" class="m-0 mt-10 p-0 list-none border-t border-border">
           {%- if has_details -%}
             <li class="m-0 border-b border-border">
@@ -313,6 +315,14 @@
                 <span class="type-overline tracking-[0.03em] text-on-surface nav-word">{{ 'product.details' | t }}</span>
                 <span class="type-overline text-on-surface motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[var(--ease-ui)] group-hover/row:rotate-90" aria-hidden="true">+</span>
               </button>
+            </li>
+          {%- endif -%}
+          {%- if size_guide_page != blank -%}
+            <li class="m-0 border-b border-border">
+              <a href="{{ size_guide_page.url }}" class="group/row flex w-full min-h-touch-target items-center justify-between py-4 text-start no-underline text-on-surface">
+                <span class="type-overline tracking-[0.03em] text-on-surface nav-word">{{ size_guide_page.title | escape }}</span>
+                <span class="type-overline text-on-surface motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[var(--ease-ui)] group-hover/row:translate-x-1 size-guide-arrow" aria-hidden="true">&rarr;</span>
+              </a>
             </li>
           {%- endif -%}
           {%- if has_policies -%}

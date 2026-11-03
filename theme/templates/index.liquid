@@ -15,50 +15,94 @@
   assign men_alt = 'home.men.title' | t
 -%}
 
-<script type="module" src="{{ 's-ring.js' | asset_url }}"></script>
-
 {%- comment -%}
-  Opening: a slow-turning 3D ring of photographs threaded through the wordmark. On arrival the cards fan out from the centre;
-  with a mouse the ring leans toward the pointer; cards turning away dim slightly. Cards in front of the ring pass over the name,
-  cards behind pass under it (shared preserve-3d scene). Visitors can drag to spin it (s-ring). The first card is the LCP,
-  mirrored by snippets/lcp-preload.liquid.
+  Opening, chosen in Theme settings → Homepage. "Campaign" (default): full-bleed campaign photography (one photograph on
+  phones, a triptych on wider screens) with the line, the call to action and the wordmark set into the photographs.
+  "Ring": the 3D ring of photographs threaded through the wordmark. Motion is CSS-only (assets/illegant-flagship.css);
+  the first photograph is the LCP (mirrored in snippets/lcp-preload.liquid) and is never hidden while it settles.
 {%- endcomment -%}
-{%- liquid
-  assign ring_images = 'illegant-real-shadow.jpg,illegant-real-man-dark.jpg,illegant-real-black-dress.jpg,illegant-real-man-mono.jpg,illegant-real-trench-lean.jpg,illegant-real-man-sea.jpg' | split: ','
--%}
-{% block 'container', class: 'screen recede home-screen relative flex flex-col justify-center gap-6 md:gap-8 min-h-[30rem] overflow-hidden', attributes: 'aria-labelledby="home-hero-heading"' %}
-  <s-ring data-cursor="{{ 'cursor.drag' | t | escape }}" class="relative block shrink-0 h-[calc(var(--card-w)*2.1)] [perspective:1800px] cursor-grab data-[dragging]:cursor-grabbing select-none touch-pan-y [--card-w:clamp(7rem,min(38vw,calc(var(--vh)*27)),17rem)] md:[--card-w:clamp(8rem,min(17vw,calc(var(--vh)*30)),28rem)] [--ring-radius:calc(var(--card-w)*1.32)]">
-    <div class="ring-floor pointer-events-none absolute start-1/2 top-[calc(50%+var(--card-w)*0.72)] h-[calc(var(--card-w)*0.4)] w-[calc(var(--card-w)*3.6)] -translate-x-1/2 rtl:translate-x-1/2" aria-hidden="true"></div>
-    <div class="absolute inset-0 [transform-style:preserve-3d]">
-      {% block 'text', tag: 'p', variant: 'type-display', class: 'pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center uppercase font-bold leading-[0.8] tracking-[-0.065em] text-[21vw] md:text-[16vw] text-on-surface whitespace-nowrap', attributes: 'aria-hidden="true"' %}{{ 'footer.wordmark' | t }}{% endblock %}
-      <div data-ring-track class="absolute start-1/2 top-1/2 size-0" aria-hidden="true">
-        {%- for ring_image_name in ring_images -%}
-          {%- liquid
-            if forloop.first
-              assign ring_attributes = 'loading="eager" fetchpriority="high" draggable="false"'
-            else
-              assign ring_attributes = 'loading="eager" draggable="false"'
-            endif
-          -%}
-          <div data-ring-card class="absolute w-(--card-w) aspect-[3/4] -ms-[calc(var(--card-w)/2)] -mt-[calc(var(--card-w)*2/3)] flex flex-col bg-surface p-[calc(var(--card-w)*0.035)] pb-0" style="--ring-index: {{ forloop.index0 }}">
-            <div class="ring-card__photo relative flex-1 min-h-0 overflow-hidden bg-surface-secondary">
-              {% block 'image', fallback_image: images[ring_image_name], aspect_ratio: 'aspect-auto', class: 'h-full pointer-events-none', sizes: '(min-width: 768px) 16vw, 40vw', alt: '', attributes: ring_attributes %}{% endblock %}
+{%- assign home_opening = settings.home_opening | default: 'campaign' -%}
+{%- if home_opening == 'campaign' -%}
+  {%- assign campaign_images = 'illegant-real-shadow.jpg,illegant-real-black-dress.jpg,illegant-real-man-dark.jpg' | split: ',' -%}
+  {% block 'container', class: 'screen recede home-screen campaign', attributes: 'aria-labelledby="home-hero-heading"' %}
+    <div class="campaign__frames" aria-hidden="true">
+      {%- for campaign_image_name in campaign_images -%}
+        {%- liquid
+          if forloop.first
+            assign campaign_attributes = 'loading="eager" fetchpriority="high"'
+          else
+            assign campaign_attributes = 'loading="lazy"'
+          endif
+        -%}
+        <div class="campaign__frame" style="--i: {{ forloop.index0 }}">
+          {% block 'image', fallback_image: images[campaign_image_name], aspect_ratio: 'aspect-auto', class: 'campaign__photo', sizes: '(min-width: 768px) 34vw, 100vw', alt: '', attributes: campaign_attributes %}{% endblock %}
+        </div>
+      {%- endfor -%}
+    </div>
+    <span class="campaign__shade" aria-hidden="true"></span>
+    <div class="campaign__copy">
+      {% block 'text', variant: 'type-overline', class: 'campaign__line tracking-[0.04em]' %}{{ 'home.hero.title' | t }}{% endblock %}
+      {% block 'text', tag: 'h2', variant: 'type-display', class: 'campaign__line campaign__heading', attributes: 'id="home-hero-heading"' %}{{ 'home.hero.heading' | t }}{% endblock %}
+      {% block 'link', url: edit_url, class: 'campaign__line campaign__cta no-underline min-h-0' %}{{ 'home.hero.cta' | t }}{% endblock %}
+    </div>
+    {%- assign campaign_letters = 'footer.wordmark' | t | split: '' -%}
+    <p class="campaign__wordmark" aria-hidden="true">{% for letter in campaign_letters %}<span class="campaign__letter" style="--i: {{ forloop.index0 }}">{{ letter }}</span>{% endfor %}</p>
+  {% endblock %}
+{%- else -%}
+  <script type="module" src="{{ 's-ring.js' | asset_url }}"></script>
+
+  {%- comment -%}
+    Opening: a slow-turning 3D ring of photographs threaded through the wordmark. On arrival the cards fan out from the centre;
+    with a mouse the ring leans toward the pointer; cards turning away dim slightly. Cards in front of the ring pass over the name,
+    cards behind pass under it (shared preserve-3d scene). Visitors can drag to spin it (s-ring). The first card is the LCP,
+    mirrored by snippets/lcp-preload.liquid.
+  {%- endcomment -%}
+  {%- liquid
+    assign ring_images = 'illegant-real-shadow.jpg,illegant-real-man-dark.jpg,illegant-real-black-dress.jpg,illegant-real-man-mono.jpg,illegant-real-trench-lean.jpg,illegant-real-man-sea.jpg' | split: ','
+  -%}
+  {% block 'container', class: 'screen recede home-screen relative flex flex-col justify-center gap-6 md:gap-8 min-h-[30rem] overflow-hidden', attributes: 'aria-labelledby="home-hero-heading"' %}
+    <s-ring data-cursor="{{ 'cursor.drag' | t | escape }}" class="relative block shrink-0 h-[calc(var(--card-w)*2.1)] [perspective:1800px] cursor-grab data-[dragging]:cursor-grabbing select-none touch-pan-y [--card-w:clamp(7rem,min(38vw,calc(var(--vh)*27)),17rem)] md:[--card-w:clamp(8rem,min(17vw,calc(var(--vh)*30)),28rem)] [--ring-radius:calc(var(--card-w)*1.32)]">
+      <div class="ring-floor pointer-events-none absolute start-1/2 top-[calc(50%+var(--card-w)*0.72)] h-[calc(var(--card-w)*0.4)] w-[calc(var(--card-w)*3.6)] -translate-x-1/2 rtl:translate-x-1/2" aria-hidden="true"></div>
+      <div class="absolute inset-0 [transform-style:preserve-3d]">
+        {% block 'text', tag: 'p', variant: 'type-display', class: 'pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center uppercase font-bold leading-[0.8] tracking-[-0.065em] text-[21vw] md:text-[16vw] text-on-surface whitespace-nowrap', attributes: 'aria-hidden="true"' %}{{ 'footer.wordmark' | t }}{% endblock %}
+        <div data-ring-track class="absolute start-1/2 top-1/2 size-0" aria-hidden="true">
+          {%- for ring_image_name in ring_images -%}
+            {%- liquid
+              if forloop.first
+                assign ring_attributes = 'loading="eager" fetchpriority="high" draggable="false"'
+              else
+                assign ring_attributes = 'loading="eager" draggable="false"'
+              endif
+            -%}
+            <div data-ring-card class="absolute w-(--card-w) aspect-[3/4] -ms-[calc(var(--card-w)/2)] -mt-[calc(var(--card-w)*2/3)] flex flex-col bg-surface p-[calc(var(--card-w)*0.035)] pb-0" style="--ring-index: {{ forloop.index0 }}">
+              <div class="ring-card__photo relative flex-1 min-h-0 overflow-hidden bg-surface-secondary">
+                {% block 'image', fallback_image: images[ring_image_name], aspect_ratio: 'aspect-auto', class: 'h-full pointer-events-none', sizes: '(min-width: 768px) 16vw, 40vw', alt: '', attributes: ring_attributes %}{% endblock %}
+              </div>
+              <div class="ring-card__caption flex items-center justify-between h-[calc(var(--card-w)*0.11)] text-on-surface">
+                <span>N&deg;0{{ forloop.index }}</span>
+                <span>{{ 'footer.wordmark' | t }}</span>
+              </div>
             </div>
-            <div class="ring-card__caption flex items-center justify-between h-[calc(var(--card-w)*0.11)] text-on-surface">
-              <span>N&deg;0{{ forloop.index }}</span>
-              <span>{{ 'footer.wordmark' | t }}</span>
-            </div>
-          </div>
-        {%- endfor -%}
+          {%- endfor -%}
+        </div>
+      </div>
+    </s-ring>
+    <div class="shrink-0 px-margin">
+      <div class="mx-auto max-w-page flex items-end justify-between gap-6">
+        {% block 'text', tag: 'h2', variant: 'type-heading-md', class: 'font-bold tracking-[0.02em] text-[clamp(0.9375rem,1vw,1.125rem)] leading-tight max-w-[16ch]', attributes: 'id="home-hero-heading"' %}{{ 'home.hero.heading' | t }}{% endblock %}
+        {% block 'link', url: edit_url, class: 'shrink-0 type-overline tracking-[0.04em] no-underline border-b border-on-surface pb-1.5 min-h-0 hover:opacity-70' %}{{ 'home.hero.cta' | t }}{% endblock %}
       </div>
     </div>
-  </s-ring>
-  <div class="shrink-0 px-margin">
-    <div class="mx-auto max-w-page flex items-end justify-between gap-6">
-      {% block 'text', tag: 'h2', variant: 'type-heading-md', class: 'font-bold tracking-[0.02em] text-[clamp(0.9375rem,1vw,1.125rem)] leading-tight max-w-[16ch]', attributes: 'id="home-hero-heading"' %}{{ 'home.hero.heading' | t }}{% endblock %}
-      {% block 'link', url: edit_url, class: 'shrink-0 type-overline tracking-[0.04em] no-underline border-b border-on-surface pb-1.5 min-h-0 hover:opacity-70' %}{{ 'home.hero.cta' | t }}{% endblock %}
-    </div>
-  </div>
+  {% endblock %}
+{%- endif -%}
+
+{%- comment -%}
+  Manifesto: one large brand sentence, straight after the opening photographs so the page alternates image and word. Each word inks in from a pale grey as it scrolls through the screen
+  one after another on arrival (s-arrivals); without JavaScript it simply reads in full ink.
+{%- endcomment -%}
+{% block 'container', class: 'screen recede home-screen w-full max-w-page mx-auto px-margin flex flex-col justify-center min-h-[24rem]', attributes: 'aria-label="ILLEGANT"' %}
+  {%- assign manifesto_words = 'home.manifesto' | t | split: ' ' -%}
+  {% block 'text', tag: 'p', variant: 'type-display', class: 'manifesto font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,1.9vw,2rem)] text-on-surface max-w-[22ch]' %}{% for word in manifesto_words %}<span class="fill-word" style="--i: {{ forloop.index0 }}">{{ word }}</span> {% endfor %}{% endblock %}
 {% endblock %}
 
 {%- comment -%}
@@ -114,15 +158,6 @@
       </div>
     </div>
   </div>
-{% endblock %}
-
-{%- comment -%}
-  Manifesto: one large brand sentence. Each word inks in from a pale grey as it scrolls through the screen
-  one after another on arrival (s-arrivals); without JavaScript it simply reads in full ink.
-{%- endcomment -%}
-{% block 'container', class: 'screen recede home-screen w-full max-w-page mx-auto px-margin flex flex-col justify-center min-h-[24rem]', attributes: 'aria-label="ILLEGANT"' %}
-  {%- assign manifesto_words = 'home.manifesto' | t | split: ' ' -%}
-  {% block 'text', tag: 'p', variant: 'type-display', class: 'manifesto font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,1.9vw,2rem)] text-on-surface max-w-[22ch]' %}{% for word in manifesto_words %}<span class="fill-word" style="--i: {{ forloop.index0 }}">{{ word }}</span> {% endfor %}{% endblock %}
 {% endblock %}
 
 {%- comment -%} The caller owns this collection source; the shell's collection setting binds to it so the editor picker rewrites the handle here. {%- endcomment -%}

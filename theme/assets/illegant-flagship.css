@@ -1,0 +1,224 @@
+/* =============================================================================
+   ILLEGANT flagship layer (November 2026)
+   Plain CSS loaded after the compiled Tailwind bundle (snippets/theme-styles.liquid), because theme edits made
+   through the Admin API do not run the Canvas/Sidekick compiler. Unlayered rules here beat layered utilities on
+   purpose; the one exception (header logo weight) sits in @layer utilities so it can outrank an !important utility.
+   Motion: transform / opacity / clip-path only; everything is still with prefers-reduced-motion.
+   ============================================================================= */
+
+/* ---------- 1. Homepage opening: campaign ------------------------------------------------------------
+   One photograph on phones, a triptych on wider screens, set edge to edge on graphite. The line, the call to
+   action and the wordmark are written into the photographs, the way a campaign page is laid out. */
+.campaign {
+  --wordmark-size: 21.6vw;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 30rem;
+  background: var(--color-on-surface);
+  color: var(--color-surface);
+}
+.campaign__frames {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+.campaign__frame { position: relative; overflow: hidden; background: #2b2a27; }
+.campaign__frame:nth-child(n + 2) { display: none; }
+.campaign__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+.campaign__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.66) 0%, rgb(0 0 0 / 0.3) 30%, rgb(0 0 0 / 0) 56%);
+}
+.campaign__copy {
+  position: absolute;
+  z-index: 2;
+  inset-inline-start: 0;
+  bottom: calc(var(--wordmark-size) * 0.86 + 1.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 30rem;
+  padding-inline: var(--spacing-margin);
+}
+.campaign .campaign__line { color: var(--color-surface); margin: 0; }
+.campaign .type-overline.campaign__line { color: rgb(255 255 255 / 0.78); }
+.campaign .campaign__heading {
+  max-width: 15ch;
+  font-weight: 700;
+  font-size: clamp(1.375rem, 1.9vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+.campaign .campaign__cta {
+  margin-top: 0.25rem;
+  padding-block-end: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-surface);
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 100% 1px;
+  transition: background-size 600ms var(--ease-ui), opacity 300ms var(--ease-ui);
+}
+.campaign .campaign__cta:hover { color: var(--color-surface); background-size: 35% 1px; }
+.campaign .campaign__cta:focus-visible { outline: 1px solid var(--color-surface); outline-offset: 6px; }
+.campaign__wordmark {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  bottom: 0;
+  margin: 0;
+  overflow: hidden;
+  padding: 0 0.065em 0.045em 0;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--wordmark-size);
+  line-height: 0.8;
+  letter-spacing: -0.065em;
+  text-transform: uppercase;
+  color: var(--color-surface);
+  user-select: none;
+}
+.campaign__letter { display: inline-block; }
+
+@media (min-width: 48rem) {
+  .campaign { --wordmark-size: 21.4vw; }
+  /* Ivory hairline gaps: three prints hung side by side rather than one image cut by dark seams. */
+  .campaign__frames { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; background: var(--color-surface); }
+  .campaign__frame:nth-child(n + 2) { display: block; }
+  .campaign__copy { bottom: calc(var(--wordmark-size) * 0.84 + 2rem); padding-inline: max(var(--spacing-margin), 2.5rem); }
+  .campaign__shade { background: linear-gradient(to top, rgb(0 0 0 / 0.58) 0%, rgb(0 0 0 / 0.18) 34%, rgb(0 0 0 / 0) 55%); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The first photograph (LCP) is visible from the first frame and only settles; the others are uncovered after it. */
+  .campaign__photo { animation: ilg-settle 2600ms var(--ease-arrive) both; }
+  .campaign__frame:nth-child(n + 2) { animation: ilg-uncover 1500ms var(--ease-arrive) both; animation-delay: calc(var(--i, 1) * 170ms + 80ms); }
+  .campaign__letter { animation: ilg-rise 1250ms var(--ease-arrive) both; animation-delay: calc(var(--i, 0) * 55ms + 380ms); }
+  .campaign__line { animation: ilg-fade-up 1000ms var(--ease-arrive) both; }
+  .campaign__line:nth-child(1) { animation-delay: 820ms; }
+  .campaign__line:nth-child(2) { animation-delay: 920ms; }
+  .campaign__line:nth-child(3) { animation-delay: 1040ms; }
+}
+@keyframes ilg-settle { from { transform: scale(1.07); } to { transform: none; } }
+@keyframes ilg-uncover { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0); } }
+@keyframes ilg-rise { from { transform: translateY(102%); } to { transform: none; } }
+@keyframes ilg-fade-up { from { opacity: 0; transform: translateY(0.9rem); } to { opacity: 1; transform: none; } }
+
+/* ---------- 2. One identity: the header logo speaks like the wordmark ------------------------------------ */
+@layer utilities {
+  .site-header .site-logo { font-weight: 700 !important; }
+}
+.site-header .site-logo { letter-spacing: -0.035em; }
+.site-header .site-logo:hover { letter-spacing: 0.01em; }
+#site-menu a[href="/"] { font-weight: 700; letter-spacing: -0.035em; }
+
+/* ---------- 3. Product page: quiet, square size selector ------------------------------------------------- */
+s-variant-picker legend {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+s-variant-picker fieldset label { opacity: 1; }
+s-variant-picker fieldset label > span.inline-flex {
+  min-width: 3rem;
+  height: 2.75rem;
+  justify-content: center;
+  padding-inline: 0.75rem;
+  border-radius: 0;
+  border-color: var(--color-border);
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: border-color 300ms var(--ease-ui), background-color 300ms var(--ease-ui), color 300ms var(--ease-ui);
+}
+s-variant-picker fieldset label:hover > span.inline-flex { border-color: var(--color-on-surface); background: transparent; }
+s-variant-picker fieldset input:checked + span.inline-flex {
+  border-color: var(--color-on-surface);
+  background: var(--color-on-surface);
+  color: var(--color-surface);
+}
+/* Unavailable sizes: struck-through label instead of a diagonal line across the box. */
+s-variant-picker fieldset label.cursor-not-allowed > span.inline-flex {
+  color: var(--color-on-surface-secondary);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+s-variant-picker fieldset label > span.inline-flex > span[aria-hidden="true"] { display: none; }
+/* A selected size that cannot be bought is outlined, never filled: a filled box reads as "ready to add". */
+s-variant-picker fieldset label.cursor-not-allowed > input:checked + span.inline-flex {
+  border-color: var(--color-on-surface);
+  background: transparent;
+  color: var(--color-on-surface-secondary);
+}
+
+/* ---------- 4. Collections: products sooner, controls as words ------------------------------------------ */
+/* The header already states the piece count; the toolbar repeated it. The live-region copy stays for screen readers. */
+[data-template="collection"] [data-results-count] + span { display: none; }
+/* Room tabs and the Grid / Index switch share one row. */
+[data-template="collection"] div:has(> div[role="group"] > [data-view-option]) {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+[data-template="collection"] div:has(> div[role="group"] > [data-view-option]) > nav { flex: 1 1 auto; min-width: 0; }
+[data-template="collection"] div[role="group"]:has(> [data-view-option]) { flex: none; margin-inline-start: auto; padding-block: 0 0.5rem; }
+@media (max-width: 47.99rem) {
+  [data-template="collection"] s-view-switch > div:first-child { padding-top: 1.5rem; }
+  /* Phones always show the grid: the Index view previews photographs at the mouse pointer, a desktop pattern. */
+  [data-template="collection"] div[role="group"]:has(> [data-view-option]) { display: none; }
+  [data-template="collection"] s-view-switch[data-view="index"] div:has(> #product-grid) { display: block; }
+  [data-template="collection"] s-view-switch[data-view="index"] s-index-preview { display: none; }
+}
+/* Filter and sort read as quiet words with a hairline, not boxed form controls. */
+button[commandfor="collection-filter-drawer"][command="show-modal"],
+button[commandfor="search-filter-drawer"][command="show-modal"] {
+  height: 2.75rem;
+  padding-inline: 0;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 calc(100% - 0.6rem) / 100% 1px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-on-surface);
+}
+select[name="sort_by"] {
+  height: 2.75rem;
+  padding-block: 0;
+  padding-inline: 0 1.75rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: max(16px, 0.75rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+@media (min-width: 48rem) { select[name="sort_by"] { font-size: 0.75rem; } }
+label[for$="-sort"] { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* ---------- 5. Product page rows ------------------------------------------------------------------------ */
+/* Size guide arrow nudges toward the reading end. */
+[dir="rtl"] .group\/row:hover .size-guide-arrow { translate: -0.25rem 0; }

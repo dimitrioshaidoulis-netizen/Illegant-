@@ -43,7 +43,11 @@
     "border_radius": "Border radius",
     "colors": "Colors",
     "fonts": "Fonts",
-    "type_styles": "Type styles"
+    "type_styles": "Type styles",
+    "homepage": "Homepage",
+    "home_opening": "Opening",
+    "home_opening_campaign": "Campaign photographs",
+    "home_opening_ring": "3D ring of photographs"
   },
   "variants": {
     "text_style": {

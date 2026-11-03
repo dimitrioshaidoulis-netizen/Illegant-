@@ -9,6 +9,7 @@
  */
 {
   "current": {
+    "home_opening": "campaign",
     "color_palette": {
       "surface": "#FAFAF8",
       "on_surface": "#1F1E1C",
