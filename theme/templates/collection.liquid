@@ -1,0 +1,287 @@
+{%- liquid
+  # Whole-word handle matching for the room hand-off at the end: women-s-tops is women, men-s-knitwear is men.
+  assign handle_words = collection.handle | split: '-'
+-%}
+{% block 'container' %}
+  {%- # theme-check-disable-next-line UnknownFilter %}
+  <s-view-event class="block pb-24" view-event-trigger="connect" view-event-payload="{{ collection | standard_event_data: 'view' | escape }}">
+  {%- comment -%}
+    Quiet header (below), then the pieces.
+    s-view-switch owns data-view ("wall" | "index") and stays outside the live-form partials, so filtered results keep the chosen view.
+  {%- endcomment -%}
+  <s-view-switch class="group/views block" data-view="wall">
+  {%- comment -%}
+    Quiet header: no campaign cover. The pieces are the opening image; the title sits small on a hairline with the count,
+    the way a house lists a season. The campaign photograph appears once, inside the grid.
+  {%- endcomment -%}
+  <div class="max-w-page mx-auto px-margin pt-10 md:pt-14">
+    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between pb-5 border-b border-on-surface">
+      {% block 'text', tag: 'h1', variant: 'type-overline', class: 'font-heading font-bold text-[clamp(0.9375rem,1vw,1.125rem)] leading-none tracking-[-0.01em] text-on-surface' %}{{ collection.title | escape }}{% endblock %}
+      <div class="flex flex-col gap-2 md:items-end md:text-end">
+        {% if collection.description != blank %}
+          <div class="richtext type-body-sm text-on-surface-secondary max-w-[46ch] line-clamp-2">{{ collection.description }}</div>
+        {% endif %}
+        {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface-secondary' %}{{ 'collections.pieces_count' | t: count: collection.products_count }}{% endblock %}
+      </div>
+    </div>
+  </div>
+  <div class="max-w-page mx-auto px-margin">
+    {%- comment -%} View toggle: two pressed-state buttons; the JS mirrors aria-pressed. Without JS the grid view stays. {%- endcomment -%}
+    {%- comment -%}
+      Room tabs: the parent menu item of this room (Women / Men) and its children, so shoppers move between
+      Tops, Knitwear and Trousers without going back. The current one is underlined. Built from the main menu.
+    {%- endcomment -%}
+    {%- liquid
+      assign room_parent = nil
+      for link in linklists['main-menu'].links
+        assign link_words = link.handle | split: '-'
+        if handle_words contains 'women'
+          if link_words contains 'women'
+            assign room_parent = link
+          endif
+        elsif handle_words contains 'men'
+          if link_words contains 'men'
+            unless link_words contains 'women'
+              assign room_parent = link
+            endunless
+          endif
+        endif
+      endfor
+    -%}
+    {%- if room_parent and room_parent.links.size > 0 -%}
+      <nav class="flex gap-x-7 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden pt-5 pb-2 -mx-margin px-margin" aria-label="{{ room_parent.title | escape }}">
+        {%- for sub in room_parent.links -%}
+          <a href="{{ sub.url }}" class="shrink-0 type-overline tracking-[0.04em] no-underline pb-3 -mb-px border-b {% if sub.url == collection.url %}border-on-surface text-on-surface{% else %}border-transparent text-on-surface-secondary hover:text-on-surface{% endif %} motion-safe:transition-colors"{% if sub.url == collection.url %} aria-current="page"{% endif %}>{{ sub.title | escape }}</a>
+        {%- endfor -%}
+      </nav>
+    {%- endif -%}
+    <div class="flex items-center justify-end gap-6 pt-6 pb-2" role="group" aria-label="{{ 'collections.view_label' | t | escape }}">
+      <button type="button" data-view-option="wall" aria-pressed="true" class="type-overline tracking-[0.03em] cursor-pointer min-h-touch-target text-on-surface-secondary aria-pressed:text-on-surface aria-pressed:underline underline-offset-8 hover:text-on-surface motion-safe:transition-colors">{{ 'collections.view_wall' | t }}</button>
+      <span class="h-3 w-px bg-border" aria-hidden="true"></span>
+      <button type="button" data-view-option="index" aria-pressed="false" class="type-overline tracking-[0.03em] cursor-pointer min-h-touch-target text-on-surface-secondary aria-pressed:text-on-surface aria-pressed:underline underline-offset-8 hover:text-on-surface motion-safe:transition-colors">{{ 'collections.view_index' | t }}</button>
+    </div>
+  </div>
+<s-live-form class="block" partial="collection-count,collection-chips,collection-filters,collection-grid" debounce="300" data-collection-id="{{ collection.id }}" data-collection-handle="{{ collection.handle | escape }}" data-updated-message="{{ 'accessibility.results_updated' | t }}" data-error-message="{{ 'accessibility.update_error' | t }}">
+  <form action="{{ collection.url }}" method="get" role="search" aria-label="{{ 'collections.filter' | t }}">
+    {% capture collection_filter_trigger %}
+      {% block 'button', commandfor: 'collection-filter-drawer', command: 'show-modal', variant: 'button-outline', class: 'h-11 px-4 text-sm rounded-button' %}{{ 'collections.filter' | t }}{% endblock %}
+    {% endcapture %}
+    {% capture collection_toolbar_submit %}
+      {% block 'button', type: 'submit', class: 'h-11 px-4 rounded-button' %}{{ 'collections.show_results' | t }}{% endblock %}
+    {% endcapture %}
+
+    {% capture collection_filter_close_button %}
+      {%- capture close_attrs -%}aria-label="{{ 'general.close' | t }}"{%- endcapture -%}
+      {% block 'button', commandfor: 'collection-filter-drawer', command: 'close', variant: 'button-ghost', class: 'size-touch-target rounded', autofocus: true, attributes: close_attrs %}<span class="inline-flex items-center justify-center size-5" aria-hidden="true">{{- 'icon-x.svg' | inline_asset_content -}}</span>{% endblock %}
+    {% endcapture %}
+    {% capture collection_results_button %}
+      {% block 'button', commandfor: 'collection-filter-drawer', command: 'close', variant: 'button-primary', class: 'h-11 w-full rounded-button' %}{{ 'collections.show_results' | t }}{% endblock %}
+    {% endcapture %}
+    {% capture collection_drawer_submit %}
+      {% block 'button', type: 'submit', class: 'h-11 w-full rounded-button' %}{{ 'collections.show_results' | t }}{% endblock %}
+    {% endcapture %}
+    {% render 'filters', page_type: 'collection', resource: collection, drawer_id: 'collection-filter-drawer', filter_trigger: collection_filter_trigger, toolbar_submit: collection_toolbar_submit, close_button: collection_filter_close_button, show_results_button: collection_results_button, drawer_submit: collection_drawer_submit %}
+
+    {% partial 'collection-grid' %}
+{% paginate collection.products by 24 %}
+  {% if collection.products.size > 0 %}
+    <h2 class="sr-only">{{ 'collections.products_heading' | t }}</h2>
+    {%- comment -%} Edge-to-edge grid (2 / 3 / 4 columns, hairline gaps); mirror sizes in snippets/lcp-preload.liquid. {%- endcomment -%}
+    {%- assign product_sizes = '(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw' -%}
+
+    {%- comment -%}
+      Grid view, gallery-wall style: pieces run edge to edge with hairline gaps, each photograph on a pale stone ground
+      above a quiet white label (small bold name, price). One campaign photograph interrupts the grid after the third piece.
+    {%- endcomment -%}
+    <div class="w-full pt-6 group-data-[view=index]/views:hidden">
+      <ul id="product-grid" role="list" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 grid-flow-row-dense gap-x-0.5 gap-y-0.5 mb-16 stagger-fade-in">
+        {% for product in collection.products %}
+          {%- liquid
+            if forloop.index <= 6
+              assign card_loading = 'eager'
+            else
+              assign card_loading = 'lazy'
+            endif
+            if forloop.index <= 3
+              assign fetch_priority = 'low'
+            else
+              assign fetch_priority = 'auto'
+            endif
+            assign card_image_attributes = 'loading="' | append: card_loading | append: '" fetchpriority="' | append: fetch_priority | append: '"'
+            assign card_variant = product.selected_or_first_available_variant
+          -%}
+          <li>
+            {%- # theme-check-disable-next-line UnknownFilter %}
+            <s-view-event class="block" view-event-trigger="intersect" view-event-payload="{{ product | standard_event_data: 'view', context: 'collection' | escape }}">
+              {% block 'card', block.name: 't:blocks.product_card', url: product.url, aria_label: product.title, border_radius: 'rounded-card' %}
+                {%- liquid
+                  # Vertical edge label: only facts the store holds (sold out, or added in the last 30 days).
+                  assign card_badge = ''
+                  assign now_s = 'now' | date: '%s' | plus: 0
+                  assign created_s = product.created_at | date: '%s' | plus: 0
+                  assign product_age = now_s | minus: created_s
+                  if product.available == false
+                    assign card_badge = 'product.sold_out' | t
+                  elsif product_age < 2592000
+                    assign card_badge = 'product.badge_new' | t
+                  endif
+                -%}
+                <div class="group/qa relative">
+                <a href="{{ product.url | escape }}" class="group relative block overflow-hidden bg-surface-secondary" data-cursor="{{ 'cursor.view' | t | escape }}" aria-label="{{ product.title | escape }}">
+                  {%- comment -%}
+                    Phones: swipe through up to four photographs inside the card (snap, dots below); the strip sits above the
+                    card's stretched link so the swipe reaches it, and a tap still opens the piece through this link.
+                    Mouse: the first photograph only; the second cross-fades in on hover.
+                  {%- endcomment -%}
+                  <s-card-gallery class="relative z-20 flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [@media(hover:hover)]:z-auto [@media(hover:hover)]:overflow-hidden">
+                    <div class="w-full shrink-0 snap-start">
+                      {%- if product.featured_image -%}
+                      {% block 'image', fallback_image: product.featured_image, aspect_ratio: 'aspect-[3/4]', class: 'motion-safe:transition-transform motion-safe:duration-[1200ms] motion-safe:ease-[var(--ease-drawer)] group-hover/card:scale-[1.03]', sizes: product_sizes, attributes: card_image_attributes, alt: product.title, seed: forloop.index %}{% endblock %}
+                      {%- else -%}{% render 'type-card', title: product.title %}{%- endif -%}
+                    </div>
+                    {%- for card_image in product.images offset: 1 limit: 3 -%}
+                      <div class="w-full shrink-0 snap-start [@media(hover:hover)]:hidden" aria-hidden="true">
+                        {% block 'image', fallback_image: card_image, aspect_ratio: 'aspect-[3/4]', sizes: product_sizes, alt: '', attributes: 'loading="lazy"' %}{% endblock %}
+                      </div>
+                    {%- endfor -%}
+                  </s-card-gallery>
+                  {%- if product.images.size > 1 -%}
+                    <span class="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center gap-1.5 [@media(hover:hover)]:hidden" aria-hidden="true">
+                      {%- assign dot_count = product.images.size | at_most: 4 -%}
+                      {%- for i in (1..dot_count) -%}
+                        <span data-dot class="size-1 rounded-full bg-on-surface/25 data-[active]:bg-on-surface motion-safe:transition-colors"{% if forloop.first %} data-active{% endif %}></span>
+                      {%- endfor -%}
+                    </span>
+                  {%- endif -%}
+                  {%- if card_badge != blank -%}
+                    {%- comment -%} The wrapper sits in the top end corner (horizontal flow); only the inner text runs vertically. {%- endcomment -%}
+                    <span class="pointer-events-none absolute top-3 end-2 z-20 flex">
+                      <span class="type-overline text-[10px] tracking-[0.04em] text-on-surface [writing-mode:vertical-rl] rotate-180">{{ card_badge | escape }}</span>
+                    </span>
+                  {%- endif -%}
+                  {%- comment -%} Second photograph cross-fades in on hover, the way luxury grids show the piece on the body. {%- endcomment -%}
+                  {%- if product.images.size > 1 -%}
+                    <div class="absolute inset-0 opacity-0 [@media(hover:none)]:hidden motion-safe:transition-opacity motion-safe:duration-700 motion-safe:ease-[var(--ease-ui)] group-hover/card:opacity-100" aria-hidden="true">
+                      {% block 'image', fallback_image: product.images[1], aspect_ratio: 'aspect-auto', class: 'h-full', sizes: product_sizes, alt: '', attributes: 'loading="lazy"' %}{% endblock %}
+                    </div>
+                  {%- endif -%}
+                </a>
+                {%- comment -%}
+                  Size strip (signature quick add): appears over the photograph on hover or keyboard focus (fine pointers),
+                  one press adds that real variant to the cart. Only for single-option products; others go to the page.
+                {%- endcomment -%}
+                {%- if product.available and product.options.size == 1 -%}
+                  <s-quick-add class="absolute inset-x-0 bottom-0 z-20 hidden [@media(hover:hover)]:block bg-surface/95 px-3 py-3 opacity-0 translate-y-2 group-hover/card:opacity-100 group-hover/card:translate-y-0 focus-within:opacity-100 focus-within:translate-y-0 motion-safe:transition-[opacity,translate] motion-safe:duration-500" data-product-url="{{ product.url | escape }}">
+                    <p class="type-overline tracking-[0.04em] text-on-surface-secondary mb-2">{{ 'product.quick_add' | t }}</p>
+                    <ul role="list" class="m-0 p-0 list-none flex flex-wrap gap-1">
+                      {%- for variant in product.variants -%}
+                        {%- liquid
+                          if product.has_only_default_variant
+                            assign qa_label = 'product.quick_add_one' | t
+                            assign qa_aria = qa_label
+                          else
+                            assign qa_label = variant.option1
+                            assign qa_aria = 'product.quick_add_size' | t: size: variant.option1, title: product.title
+                          endif
+                        -%}
+                        <li class="m-0">
+                          <button type="button" data-variant-id="{{ variant.id }}" aria-label="{{ qa_aria | escape }}"{% unless variant.available %} aria-disabled="true"{% endunless %} class="min-w-10 h-10 px-3 cursor-pointer border border-border type-overline tracking-[0.03em] text-on-surface bg-transparent hover:bg-on-surface hover:text-surface hover:border-on-surface data-[pressed]:opacity-50 aria-disabled:line-through aria-disabled:text-on-surface-secondary aria-disabled:cursor-not-allowed aria-disabled:hover:bg-transparent aria-disabled:hover:text-on-surface-secondary motion-safe:transition-colors">{{ qa_label | escape }}</button>
+                        </li>
+                      {%- endfor -%}
+                    </ul>
+                  </s-quick-add>
+                {%- endif -%}
+                </div>
+                <div class="flex flex-col gap-1 px-3 pt-3 pb-7 md:px-4 md:pb-9">
+                  {% block 'text', tag: 'h3', class: 'text-xs font-bold leading-4 text-on-surface line-clamp-2' %}{{ product.title | escape }}{% endblock %}
+                  {% block 'price', price: card_variant.price, compare_at_price: card_variant.compare_at_price, price_min: product.price_min, price_max: product.price_max, class: 'text-xs text-on-surface' %}{% endblock %}
+                </div>
+              {% endblock %}
+            </s-view-event>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {%- comment -%}
+      Index view: a printed catalogue list. Each row floats a framed preview beside the cursor (s-index-preview, fine pointers).
+      The inactive view is display:none, so assistive tech only meets one list at a time.
+    {%- endcomment -%}
+    <s-index-preview class="hidden group-data-[view=index]/views:block w-full max-w-page mx-auto px-margin pt-6 mb-16">
+      <ol role="list" class="border-t border-on-surface">
+        {% for product in collection.products %}
+          {%- liquid
+            assign plate_number = paginate.current_offset | plus: forloop.index
+            if plate_number < 10
+              assign plate_number = plate_number | prepend: '0'
+            endif
+            assign index_variant = product.selected_or_first_available_variant
+            assign preview_src = ''
+            if product.featured_image
+              assign preview_src = product.featured_image | image_url: width: 600
+            endif
+          -%}
+          <li>
+            <a href="{{ product.url | escape }}" {% if preview_src != blank %}data-preview-src="{{ preview_src }}"{% endif %} class="group/row grid grid-cols-[3rem_1fr_auto] md:grid-cols-[6rem_1fr_14rem_auto] items-baseline gap-4 md:gap-8 py-6 md:py-8 border-b border-border no-underline text-on-surface hover:border-on-surface motion-safe:transition-colors">
+              <span class="type-overline tracking-[0.03em] text-accent">{{ plate_number }}</span>
+              <span class="type-display font-bold text-[clamp(1.125rem,1.4vw,1.5rem)] leading-none tracking-[-0.01em] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[var(--ease-ui)] group-hover/row:translate-x-3 rtl:group-hover/row:-translate-x-3">{{ product.title | escape }}</span>
+              <span class="hidden md:block type-overline tracking-[0.03em] text-on-surface-secondary">{{ product.type | default: product.vendor | escape }}</span>
+              {% block 'price', price: index_variant.price, compare_at_price: index_variant.compare_at_price, price_min: product.price_min, price_max: product.price_max, class: 'text-sm text-on-surface' %}{% endblock %}
+            </a>
+          </li>
+        {% endfor %}
+      </ol>
+      {%- comment -%} Physical left-0 is deliberate: the preview tracks clientX/clientY, which are not direction-aware. {%- endcomment -%}
+      <img data-preview alt="" width="600" height="750" class="pointer-events-none fixed top-0 left-0 z-30 w-60 aspect-[4/5] object-cover bg-surface p-2.5 border border-border shadow-[0_40px_80px_-40px_rgb(31_30_28/0.6)] opacity-0 scale-95 data-[visible]:opacity-100 data-[visible]:scale-100 motion-safe:transition-[opacity,scale] motion-safe:duration-300">
+    </s-index-preview>
+
+    <div class="max-w-page mx-auto px-margin">
+      {% block 'pagination', paginate: paginate %}{% endblock %}
+    </div>
+  {% else %}
+    {% if collection.products_count == 0 %}
+      <div class="max-w-page mx-auto px-margin py-24 text-center">
+        <p class="type-overline tracking-[0.04em] text-on-surface-secondary">ILLEGANT / FIRST EDIT</p>
+        <h2 class="mt-4 font-heading text-[clamp(1.25rem,2vw,2rem)] leading-tight">The first edit is taking shape.</h2>
+        <p class="type-body text-on-surface-secondary max-w-[46ch] mx-auto mt-4">We’re confirming product details, sizing and availability. Pieces will appear here before orders open.</p>
+        <a href="{{ pages['faq'].url | default: routes.root_url }}" class="inline-flex mt-6 items-center gap-2 border-b border-current pb-1 type-overline tracking-[0.04em] no-underline text-on-surface hover:opacity-70">Read the FAQ <span aria-hidden="true">→</span></a>
+      </div>
+    {% else %}
+      {% block 'text', variant: 'type-body', class: 'text-on-surface-secondary py-24 text-center max-w-page mx-auto px-margin' %}{{ 'collections.no_products' | t }}{% endblock %}
+    {% endif %}
+  {% endif %}
+{% endpaginate %}
+    {% endpartial %}
+  </form>
+</s-live-form>
+</s-view-switch>
+</s-view-event>
+
+{%- comment -%}
+  Quiet hand-off: every room ends on one small line to the next room (women → men → new arrivals → women), no photograph.
+{%- endcomment -%}
+{%- liquid
+  if handle_words contains 'women'
+    assign next_room = collections['men']
+  elsif handle_words contains 'men'
+    assign next_room = collections['new-arrivals']
+  else
+    assign next_room = collections['women']
+  endif
+-%}
+{%- if next_room != blank and next_room.handle != collection.handle -%}
+  <a href="{{ next_room.url }}" class="group block border-t border-on-surface no-underline text-on-surface">
+    <span class="max-w-page mx-auto px-margin py-10 md:py-14 flex items-baseline justify-between gap-6">
+      <span class="type-overline tracking-[0.04em] text-on-surface-secondary">{{ 'product.next_room' | t }}</span>
+      <span class="font-heading font-bold leading-none tracking-[-0.01em] text-[clamp(1rem,1.2vw,1.25rem)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[var(--ease-ui)] group-hover:-translate-x-2 rtl:group-hover:translate-x-2">{{ next_room.title | escape }} &rarr;</span>
+    </span>
+  </a>
+{%- endif -%}
+
+<script type="module" src="{{ 's-view-switch.js' | asset_url }}"></script>
+<script type="module" src="{{ 's-index-preview.js' | asset_url }}"></script>
+<script type="module" src="{{ 's-quick-add.js' | asset_url }}"></script>
+<script type="module" src="{{ 's-card-gallery.js' | asset_url }}"></script>
+<script type="application/ld+json">
+  {{ collection | structured_data }}
+</script>
+{% endblock %}

@@ -1,0 +1,250 @@
+{%- comment -%} <s-screen-lock>: one wheel gesture = one screen (.screen stops, then the footer); each arrival effect finishes before the next move. {%- endcomment -%}
+<s-screen-lock class="block">
+{%- comment -%} Visually-hidden page heading keeps the homepage's h1 contract; the wordmark carries the visible identity. {%- endcomment -%}
+<h1 class="sr-only">ILLEGANT</h1>
+
+{%- liquid
+  assign women_image = images['illegant-real-white-suit.jpg']
+  assign men_image = images['illegant-real-man-suit.jpg']
+
+  assign women_url = collections['women'].url | default: routes.all_products_collection_url
+  assign men_url = collections['men'].url | default: routes.all_products_collection_url
+  assign edit_url = collections['new-arrivals'].url | default: routes.all_products_collection_url
+
+  assign women_alt = 'home.women.title' | t
+  assign men_alt = 'home.men.title' | t
+-%}
+
+<script type="module" src="{{ 's-ring.js' | asset_url }}"></script>
+
+{%- comment -%}
+  Opening: a slow-turning 3D ring of photographs threaded through the wordmark. On arrival the cards fan out from the centre;
+  with a mouse the ring leans toward the pointer; cards turning away dim slightly. Cards in front of the ring pass over the name,
+  cards behind pass under it (shared preserve-3d scene). Visitors can drag to spin it (s-ring). The first card is the LCP,
+  mirrored by snippets/lcp-preload.liquid.
+{%- endcomment -%}
+{%- liquid
+  assign ring_images = 'illegant-real-shadow.jpg,illegant-real-man-dark.jpg,illegant-real-black-dress.jpg,illegant-real-man-mono.jpg,illegant-real-trench-lean.jpg,illegant-real-man-sea.jpg' | split: ','
+-%}
+{% block 'container', class: 'screen recede home-screen relative flex flex-col justify-center gap-6 md:gap-8 min-h-[30rem] overflow-hidden', attributes: 'aria-labelledby="home-hero-heading"' %}
+  <s-ring data-cursor="{{ 'cursor.drag' | t | escape }}" class="relative block shrink-0 h-[calc(var(--card-w)*2.1)] [perspective:1800px] cursor-grab data-[dragging]:cursor-grabbing select-none touch-pan-y [--card-w:clamp(7rem,min(38vw,calc(var(--vh)*27)),17rem)] md:[--card-w:clamp(8rem,min(17vw,calc(var(--vh)*30)),28rem)] [--ring-radius:calc(var(--card-w)*1.32)]">
+    <div class="ring-floor pointer-events-none absolute start-1/2 top-[calc(50%+var(--card-w)*0.72)] h-[calc(var(--card-w)*0.4)] w-[calc(var(--card-w)*3.6)] -translate-x-1/2 rtl:translate-x-1/2" aria-hidden="true"></div>
+    <div class="absolute inset-0 [transform-style:preserve-3d]">
+      {% block 'text', tag: 'p', variant: 'type-display', class: 'pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center uppercase font-bold leading-[0.8] tracking-[-0.065em] text-[21vw] md:text-[16vw] text-on-surface whitespace-nowrap', attributes: 'aria-hidden="true"' %}{{ 'footer.wordmark' | t }}{% endblock %}
+      <div data-ring-track class="absolute start-1/2 top-1/2 size-0" aria-hidden="true">
+        {%- for ring_image_name in ring_images -%}
+          {%- liquid
+            if forloop.first
+              assign ring_attributes = 'loading="eager" fetchpriority="high" draggable="false"'
+            else
+              assign ring_attributes = 'loading="eager" draggable="false"'
+            endif
+          -%}
+          <div data-ring-card class="absolute w-(--card-w) aspect-[3/4] -ms-[calc(var(--card-w)/2)] -mt-[calc(var(--card-w)*2/3)] flex flex-col bg-surface p-[calc(var(--card-w)*0.035)] pb-0" style="--ring-index: {{ forloop.index0 }}">
+            <div class="ring-card__photo relative flex-1 min-h-0 overflow-hidden bg-surface-secondary">
+              {% block 'image', fallback_image: images[ring_image_name], aspect_ratio: 'aspect-auto', class: 'h-full pointer-events-none', sizes: '(min-width: 768px) 16vw, 40vw', alt: '', attributes: ring_attributes %}{% endblock %}
+            </div>
+            <div class="ring-card__caption flex items-center justify-between h-[calc(var(--card-w)*0.11)] text-on-surface">
+              <span>N&deg;0{{ forloop.index }}</span>
+              <span>{{ 'footer.wordmark' | t }}</span>
+            </div>
+          </div>
+        {%- endfor -%}
+      </div>
+    </div>
+  </s-ring>
+  <div class="shrink-0 px-margin">
+    <div class="mx-auto max-w-page flex items-end justify-between gap-6">
+      {% block 'text', tag: 'h2', variant: 'type-heading-md', class: 'font-bold tracking-[0.02em] text-[clamp(0.9375rem,1vw,1.125rem)] leading-tight max-w-[16ch]', attributes: 'id="home-hero-heading"' %}{{ 'home.hero.heading' | t }}{% endblock %}
+      {% block 'link', url: edit_url, class: 'shrink-0 type-overline tracking-[0.04em] no-underline border-b border-on-surface pb-1.5 min-h-0 hover:opacity-70' %}{{ 'home.hero.cta' | t }}{% endblock %}
+    </div>
+  </div>
+{% endblock %}
+
+{%- comment -%}
+  Rooms: Women and Men side by side straight after the opening (stacked on mobile). The hovered room widens and the other
+  dims; each carries its real piece count and its sub-categories from the main menu. One stretched link per room keeps the
+  whole photograph clickable while the sub-links stay separate (no nested anchors). Photos open like a curtain on scroll.
+{%- endcomment -%}
+{%- liquid
+  assign women_room = collections['women']
+  assign men_room = collections['men']
+  for link in linklists['main-menu'].links
+    assign link_words = link.handle | split: '-'
+    if link_words contains 'women'
+      assign women_links = link.links
+    elsif link_words contains 'men'
+      assign men_links = link.links
+    endif
+  endfor
+-%}
+{% block 'container', class: 'screen recede rooms curtain', attributes: 'aria-label="ILLEGANT"' %}
+  <div class="room snap-stop group/room text-surface">
+    {% block 'image', fallback_image: women_image, aspect_ratio: 'aspect-auto', class: 'room__photo absolute inset-0 h-full object-[50%_32%]', sizes: '(min-width: 768px) 60vw, 100vw', alt: women_alt, attributes: 'loading="lazy"' %}{% endblock %}
+    <span class="pointer-events-none absolute inset-0 bg-linear-to-t from-on-surface/80 via-on-surface/10 to-transparent" aria-hidden="true"></span>
+    <a href="{{ women_url }}" class="absolute inset-0 z-10" data-cursor="{{ women_room.title | default: women_alt | escape }}" aria-label="{{ women_room.title | default: women_alt | escape }}"></a>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-margin pb-8 md:pb-12 flex flex-col gap-4">
+      {%- if women_room.products_count > 0 -%}
+        {% block 'text', tag: 'p', variant: 'type-overline', class: 'rise tracking-[0.04em] text-surface/80' %}{{ 'home.pieces' | t: count: women_room.products_count }}{% endblock %}
+      {%- endif -%}
+      {% block 'text', tag: 'h2', variant: 'type-display', class: 'rise font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,5vw,1.5rem)] md:text-[clamp(1.25rem,1.6vw,1.75rem)] text-surface' %}{{ 'home.women.title' | t }}{% endblock %}
+      <div class="rise flex flex-wrap items-center gap-x-6 gap-y-2">
+        {%- for sub in women_links -%}
+          <a href="{{ sub.url }}" class="pointer-events-auto type-overline tracking-[0.03em] no-underline text-surface/75 hover:text-surface border-b border-transparent hover:border-surface pb-0.5">{{ sub.title | escape }}</a>
+        {%- endfor -%}
+        {% block 'text', tag: 'span', variant: 'type-overline', class: 'tracking-[0.04em] text-surface border-b border-surface pb-1' %}{{ 'home.women.cta' | t }} &rarr;{% endblock %}
+      </div>
+    </div>
+  </div>
+
+  <div class="room snap-stop group/room text-surface">
+    {% block 'image', fallback_image: men_image, aspect_ratio: 'aspect-auto', class: 'room__photo absolute inset-0 h-full object-[45%_30%]', sizes: '(min-width: 768px) 60vw, 100vw', alt: men_alt, attributes: 'loading="lazy"' %}{% endblock %}
+    <span class="pointer-events-none absolute inset-0 bg-linear-to-t from-on-surface/80 via-on-surface/10 to-transparent" aria-hidden="true"></span>
+    <a href="{{ men_url }}" class="absolute inset-0 z-10" data-cursor="{{ men_room.title | default: men_alt | escape }}" aria-label="{{ men_room.title | default: men_alt | escape }}"></a>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-margin pb-8 md:pb-12 flex flex-col gap-4">
+      {%- if men_room.products_count > 0 -%}
+        {% block 'text', tag: 'p', variant: 'type-overline', class: 'rise tracking-[0.04em] text-surface/80' %}{{ 'home.pieces' | t: count: men_room.products_count }}{% endblock %}
+      {%- endif -%}
+      {% block 'text', tag: 'h2', variant: 'type-display', class: 'rise font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,5vw,1.5rem)] md:text-[clamp(1.25rem,1.6vw,1.75rem)] text-surface' %}{{ 'home.men.title' | t }}{% endblock %}
+      <div class="rise flex flex-wrap items-center gap-x-6 gap-y-2">
+        {%- for sub in men_links -%}
+          <a href="{{ sub.url }}" class="pointer-events-auto type-overline tracking-[0.03em] no-underline text-surface/75 hover:text-surface border-b border-transparent hover:border-surface pb-0.5">{{ sub.title | escape }}</a>
+        {%- endfor -%}
+        {% block 'text', tag: 'span', variant: 'type-overline', class: 'tracking-[0.04em] text-surface border-b border-surface pb-1' %}{{ 'home.men.cta' | t }} &rarr;{% endblock %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{%- comment -%}
+  Manifesto: one large brand sentence. Each word inks in from a pale grey as it scrolls through the screen
+  one after another on arrival (s-arrivals); without JavaScript it simply reads in full ink.
+{%- endcomment -%}
+{% block 'container', class: 'screen recede home-screen w-full max-w-page mx-auto px-margin flex flex-col justify-center min-h-[24rem]', attributes: 'aria-label="ILLEGANT"' %}
+  {%- assign manifesto_words = 'home.manifesto' | t | split: ' ' -%}
+  {% block 'text', tag: 'p', variant: 'type-display', class: 'manifesto font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,1.9vw,2rem)] text-on-surface max-w-[22ch]' %}{% for word in manifesto_words %}<span class="fill-word" style="--i: {{ forloop.index0 }}">{{ word }}</span> {% endfor %}{% endblock %}
+{% endblock %}
+
+{%- comment -%} The caller owns this collection source; the shell's collection setting binds to it so the editor picker rewrites the handle here. {%- endcomment -%}
+{%- liquid
+  assign featured_collection = collections['new-arrivals'] | default: collections.all
+  assign featured_product_count = 6
+  assign featured_url = featured_collection.url | default: routes.all_products_collection_url
+  assign featured_product_sizes = '(min-width: 768px) 28vw, 46vw'
+  assign edit_image = images['illegant-real-knit-duo.jpg']
+-%}
+
+{%- comment -%}
+  The edit, as a magazine spread: a tall photograph with the title holds still on the start side (sticky on md+),
+  while the pieces climb past it in a staggered two-column grid. Pieces without photographs become typographic cards
+  (title + price) instead of empty placeholders.
+{%- endcomment -%}
+{% block 'featured-collection', collection: featured_collection, class: 'screen relative bg-surface pt-12 md:pt-16 pb-24 md:pb-36' %}
+  <div class="w-full max-w-page mx-auto px-margin grid gap-12 md:grid-cols-12 md:gap-10">
+    <div class="md:col-span-5">
+      <div class="md:sticky md:top-28 flex flex-col gap-6">
+        <div class="wipe-up relative aspect-[4/5] overflow-hidden bg-surface-secondary">
+          {% block 'image', fallback_image: edit_image, aspect_ratio: 'aspect-auto', class: 'absolute inset-0 h-full object-[50%_30%]', sizes: '(min-width: 768px) 40vw, 100vw', alt: '', attributes: 'loading="lazy"' %}{% endblock %}
+        </div>
+        <div class="flex items-end justify-between gap-6">
+          <div class="flex flex-col gap-2">
+            {% block 'text', tag: 'h2', variant: 'type-display', class: 'font-bold text-[clamp(1.125rem,1.4vw,1.5rem)] leading-[1.15] tracking-[-0.01em]' %}{{ 'home.reel.title' | t }}{% endblock %}
+            {% block 'text', variant: 'type-body-sm', class: 'text-on-surface-secondary' %}{{ 'home.reel.body' | t }}{% endblock %}
+          </div>
+          {% block 'link', url: featured_url, class: 'shrink-0 type-overline tracking-[0.04em] no-underline border-b border-on-surface pb-1.5 min-h-0 mb-1' %}{{ 'collections.view_all' | t }} &rarr;{% endblock %}
+        </div>
+      </div>
+    </div>
+
+    <div class="md:col-span-7">
+      {%- if featured_collection != blank and featured_collection.products_count > 0 -%}
+        <ul role="list" class="stagger grid grid-cols-2 gap-x-3 md:gap-x-6 gap-y-12 md:gap-y-16">
+          {% for product in featured_collection.products limit: featured_product_count %}
+            <li class="{% cycle '', 'md:translate-y-20' %}" style="--i: {{ forloop.index0 }}">
+              {%- # theme-check-disable-next-line UnknownFilter %}
+              <s-view-event class="block" view-event-trigger="intersect" view-event-payload="{{ product | standard_event_data: 'view', context: 'collection' | escape }}">
+                {%- assign card_variant = product.selected_or_first_available_variant -%}
+                {% block 'card', block.name: 't:blocks.product_card', url: product.url, aria_label: product.title, border_radius: 'rounded-card' %}
+                  <a href="{{ product.url | escape }}" class="group relative block overflow-hidden bg-surface-secondary" data-cursor="{{ 'cursor.view' | t | escape }}" aria-label="{{ product.title | escape }}">
+                    {%- if product.featured_image -%}
+                      {% block 'image', fallback_image: product.featured_image, aspect_ratio: 'aspect-[3/4]', class: 'motion-safe:transition-transform motion-safe:duration-[1200ms] motion-safe:ease-[var(--ease-drawer)] group-hover/card:scale-[1.03]', sizes: featured_product_sizes, attributes: 'loading="lazy"', alt: product.title, seed: forloop.index %}{% endblock %}
+                    {%- else -%}
+                      <span class="flex aspect-[3/4] flex-col justify-between p-4 md:p-6 text-on-surface motion-safe:transition-colors motion-safe:duration-500 group-hover/card:bg-on-surface group-hover/card:text-surface">
+                        <span class="type-overline tracking-[0.04em] opacity-60">{{ 'footer.wordmark' | t }}</span>
+                        <span class="font-heading font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1rem,1.2vw,1.25rem)] break-words">{{ product.title | escape }}</span>
+                      </span>
+                    {%- endif -%}
+                  </a>
+                  <div class="mt-3 flex flex-col gap-1">
+                    {% block 'text', tag: 'h3', class: 'text-xs font-bold leading-4 text-on-surface line-clamp-2' %}{{ product.title | escape }}{% endblock %}
+                    {% block 'price', price: card_variant.price, compare_at_price: card_variant.compare_at_price, price_min: product.price_min, price_max: product.price_max, class: 'text-xs text-on-surface' %}{% endblock %}
+                  </div>
+                {% endblock %}
+              </s-view-event>
+            </li>
+          {% endfor %}
+        </ul>
+      {%- else -%}
+        {%- comment -%} Placeholder pieces remain selectable before the collection has products. {%- endcomment -%}
+        <ul role="list" class="grid grid-cols-2 gap-x-3 md:gap-x-6 gap-y-12">
+          {% for placeholder_index in (1..4) %}
+            <li class="{% cycle '', 'md:translate-y-20' %}" style="--i: {{ forloop.index0 }}">
+              {%- assign placeholder_title = 'product.placeholder_title' | t -%}
+              {% block 'card', block.name: 't:blocks.product_card', url: routes.root_url, aria_label: placeholder_title, border_radius: 'rounded-card' %}
+                <a href="{{ routes.root_url | escape }}" class="relative block overflow-hidden bg-surface-secondary" aria-label="{{ placeholder_title | escape }}">
+                  {% block 'image', aspect_ratio: 'aspect-[3/4]', sizes: featured_product_sizes, alt: placeholder_title, seed: placeholder_index %}{% endblock %}
+                </a>
+                <div class="mt-3">
+                  {% block 'text', tag: 'h3', class: 'text-xs font-bold leading-4 text-on-surface' %}{{ placeholder_title | escape }}{% endblock %}
+                </div>
+              {% endblock %}
+            </li>
+          {% endfor %}
+        </ul>
+      {%- endif -%}
+    </div>
+  </div>
+{% endblock %}
+
+{%- comment -%}
+  Private access, as one cinematic frame: the photograph fills the screen and the invitation is written into its
+  shadow, so image and ask are read together on every screen size. On arrival the light comes up slowly (.dusk).
+  A native customer form subscribes the visitor to email marketing (tagged "private-access"), so no app is needed.
+{%- endcomment -%}
+{%- assign access_image = images['illegant-v2-woman-dark-room.jpg'] -%}
+{% block 'container', class: 'screen access relative isolate overflow-hidden bg-on-surface text-surface h-[calc(var(--vh)*100-var(--header-h))] min-h-[36rem]', attributes: 'aria-labelledby="home-access-heading"' %}
+  <div class="dusk absolute inset-0 -z-10">
+    {% block 'image', fallback_image: access_image, aspect_ratio: 'aspect-auto', class: 'absolute inset-0 h-full object-[45%_30%] md:object-[50%_30%]', sizes: '100vw', alt: '', attributes: 'loading="lazy"' %}{% endblock %}
+  </div>
+  <div class="access__shade pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
+  <div class="lines relative flex h-full flex-col justify-end gap-5 px-margin md:px-14 lg:px-20 pb-10 md:pb-16 lg:pb-20 max-w-[34rem] md:max-w-[36rem] md:ms-auto">
+    {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-surface/70' %}{{ 'home.access.label' | t }}{% endblock %}
+    {% block 'text', tag: 'h2', variant: 'type-display', class: 'font-bold text-[clamp(1.25rem,1.6vw,1.75rem)] leading-[1.15] tracking-[-0.01em] text-surface', attributes: 'id="home-access-heading"' %}{{ 'home.access.heading' | t }}{% endblock %}
+    {% block 'text', variant: 'type-body', class: 'text-surface/80 max-w-[34ch]' %}{{ 'home.access.body' | t }}{% endblock %}
+
+    {%- form 'customer', id: 'private-access-form', class: 'w-full pt-2' -%}
+      <input type="hidden" name="contact[tags]" value="newsletter, private-access">
+      {%- if form.posted_successfully? -%}
+        <p class="type-body text-surface" role="status">{{ 'home.access.success' | t }}</p>
+      {%- else -%}
+        <div class="flex items-end gap-0 border-b border-surface/60 focus-within:border-surface">
+          <label class="flex-1 flex flex-col items-start gap-1 text-start">
+            <span class="type-overline tracking-[0.04em] text-surface/60">{{ 'home.access.email_label' | t }}</span>
+            <input type="email" name="contact[email]" required autocomplete="email" class="w-full h-12 bg-transparent border-0 px-0 type-body text-surface rounded-none focus:outline-none">
+          </label>
+          {% block 'button', type: 'submit', variant: 'custom', class: 'h-12 shrink-0 ps-4 pe-0 bg-transparent text-surface type-overline tracking-[0.04em] font-bold hover:opacity-70 focus-visible:outline-surface' %}{{ 'home.access.submit' | t }} &rarr;{% endblock %}
+        </div>
+        {%- if form.errors -%}
+          <p class="mt-3 type-body-sm text-surface" role="alert">{{ form.errors | default_errors }}</p>
+        {%- endif -%}
+        {%- comment -%} Consent notice for EU email sign-up; the privacy link appears once a privacy policy exists. {%- endcomment -%}
+        <p class="mt-4 text-xs leading-5 text-surface/60 max-w-[44ch]">
+          {{ 'home.access.consent' | t }}
+          {%- if shop.privacy_policy %} <a href="{{ shop.privacy_policy.url }}" class="text-surface underline underline-offset-2 hover:opacity-70">{{ 'home.access.privacy' | t }}</a>{% endif %}
+        </p>
+      {%- endif -%}
+    {%- endform -%}
+  </div>
+{% endblock %}
+</s-screen-lock>
+<script type="module" src="{{ 's-screen-lock.js' | asset_url }}"></script>

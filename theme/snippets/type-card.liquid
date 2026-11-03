@@ -1,0 +1,16 @@
+{% doc %}
+  Typographic stand-in for a product without a photograph: the wordmark above, the product title set large below.
+  Reads as an intentional editorial card instead of an empty placeholder. Inverts on hover inside a `group` link.
+
+  @param {string} title - Product title to set. @required
+  @param {string} [aspect] - Aspect ratio utility. Default: 'aspect-[3/4]'.
+  @param {string} [size] - Title font-size utility. Default: 'text-[clamp(1rem,1.2vw,1.25rem)]'.
+{% enddoc %}
+{%- liquid
+  assign aspect = aspect | default: 'aspect-[3/4]'
+  assign size = size | default: 'text-[clamp(1rem,1.2vw,1.25rem)]'
+-%}
+<span class="flex {{ aspect }} w-full flex-col justify-between p-4 md:p-6 bg-surface-secondary text-on-surface motion-safe:transition-colors motion-safe:duration-500 group-hover/card:bg-on-surface group-hover/card:text-surface">
+  <span class="type-overline tracking-[0.04em] opacity-60">{{ 'footer.wordmark' | t }}</span>
+  <span class="font-heading uppercase font-bold leading-[0.88] tracking-[-0.05em] {{ size }} break-words">{{ title | escape }}</span>
+</span>

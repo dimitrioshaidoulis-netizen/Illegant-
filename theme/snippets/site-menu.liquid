@@ -1,0 +1,137 @@
+{% doc %}
+  Full-screen site menu (all breakpoints). A native modal <dialog id="site-menu"> opened with
+  commandfor="site-menu" command="show-modal" from the header.
+
+  Motion (CSS only, see config/styles.css "Site menu"): the sheet opens like a curtain (clip-path, @starting-style),
+  each top-level word rises out of its mask with a stagger, and <s-menu-stage> uncovers the photograph that belongs
+  to the hovered/focused word while the other words dim. Reduced motion: everything appears without movement.
+
+  @param {object} menu - The linklist to render (main menu). @required
+  @param {string} [localization_submit] - Caller-captured language submit button for the phone language/currency picker.
+{% enddoc %}
+
+{%- liquid
+  assign fallback_mood = images['illegant-real-window-duo.jpg']
+-%}
+
+<dialog id="site-menu" class="site-menu" aria-label="{{ 'site_menu.label' | t | escape }}">
+  <s-menu-stage class="flex h-full flex-col">
+    <div class="flex items-center justify-between px-margin min-h-16 md:min-h-20 shrink-0">
+      <a href="{{ routes.root_url }}" class="type-overline tracking-[0.04em] no-underline text-on-surface">{{ 'footer.wordmark' | t }}</a>
+      <button type="button" commandfor="site-menu" command="close" class="inline-flex items-center gap-3 min-h-touch-target cursor-pointer type-overline tracking-[0.04em] text-on-surface hover:opacity-70">
+        {{ 'site_menu.close' | t }}
+        <span class="inline-flex size-4" aria-hidden="true">{{- 'icon-x.svg' | inline_asset_content -}}</span>
+      </button>
+    </div>
+
+    <div class="grid flex-1 min-h-0 md:grid-cols-12 gap-8 px-margin pb-6 overflow-y-auto overscroll-contain">
+      <nav class="md:col-span-6 flex flex-col justify-center py-6" aria-label="{{ 'header.navigation' | t | escape }}">
+        <ul role="list" class="site-menu__list m-0 p-0 list-none flex flex-col gap-4 md:gap-5">
+          {%- for link in menu.links -%}
+            <li class="site-menu__item m-0" style="--i: {{ forloop.index0 }}">
+              <a href="{{ link.url }}" data-menu-target="{{ forloop.index0 }}" class="site-menu__word group/word flex items-start gap-3 md:gap-5 no-underline text-on-surface"{% if link.active %} aria-current="page"{% endif %}>
+                <span class="type-overline tracking-[0.03em] text-on-surface-secondary pt-[0.6em]" aria-hidden="true">{{ forloop.index | prepend: '0' }}</span>
+                <span class="block overflow-hidden pb-[0.06em]">
+                  <span class="site-menu__rise block font-heading font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,1.6vw,1.75rem)]">{{ link.title | escape }}</span>
+                </span>
+              </a>
+              {%- if link.links.size > 0 -%}
+                <ul role="list" class="site-menu__sub m-0 mt-2 ps-9 md:ps-14 p-0 list-none flex flex-wrap gap-x-6 gap-y-2">
+                  {%- for sub in link.links -%}
+                    <li class="m-0"><a href="{{ sub.url }}" class="type-overline tracking-[0.03em] no-underline text-on-surface-secondary hover:text-on-surface border-b border-transparent hover:border-on-surface pb-0.5">{{ sub.title | escape }}</a></li>
+                  {%- endfor -%}
+                </ul>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      </nav>
+
+      {%- comment -%} The photograph of the hovered word, captioned with what waits inside (title + piece count). {%- endcomment -%}
+      <div class="hidden md:block md:col-span-3 md:col-start-7 relative my-6 overflow-hidden bg-surface-secondary" aria-hidden="true">
+        {%- for link in menu.links -%}
+          {%- liquid
+            assign link_words = link.handle | split: '-'
+            if link_words contains 'women'
+              assign mood = images['illegant-real-colonnade.jpg']
+            elsif link_words contains 'men'
+              assign mood = images['illegant-real-man-arches.jpg']
+            elsif link_words contains 'new'
+              assign mood = images['illegant-real-duo-hills.jpg']
+            else
+              assign mood = fallback_mood
+            endif
+            assign mood = link.object.image | default: mood
+          -%}
+          <div class="site-menu__photo absolute inset-0 text-surface" data-menu-photo="{{ forloop.index0 }}"{% if forloop.first %} data-current{% endif %}>
+            {{ mood | image_url: width: 1000 | image_tag: loading: 'lazy', sizes: '26vw', widths: '500,750,1000', class: 'size-full object-cover object-[42%_35%]', alt: '' }}
+            <span class="pointer-events-none absolute inset-0 bg-linear-to-t from-on-surface/60 to-transparent to-50%"></span>
+            <span class="absolute inset-x-0 bottom-0 flex items-baseline justify-between gap-4 p-5">
+              <span class="type-overline tracking-[0.04em]">{{ link.title | escape }}</span>
+              {%- if link.type == 'collection_link' -%}
+                <span class="type-overline tracking-[0.04em] opacity-80">{{ 'home.pieces' | t: count: link.object.products_count }}</span>
+              {%- endif -%}
+            </span>
+          </div>
+        {%- endfor -%}
+      </div>
+
+      {%- comment -%}
+        New in: the three newest pieces, so the menu always shows what is happening now. Pieces without a
+        photograph get a small typographic tile. Hidden when the collection is missing or empty.
+      {%- endcomment -%}
+      {%- assign new_in = collections['new-arrivals'] -%}
+      {%- if new_in != blank and new_in.products_count > 0 -%}
+        <section class="site-menu__sub md:col-span-3 md:col-start-10 flex flex-col justify-center gap-5 py-6 border-t border-border md:border-t-0" aria-labelledby="site-menu-new-in">
+          <div class="flex items-baseline justify-between gap-4">
+            <h2 id="site-menu-new-in" class="m-0 type-overline tracking-[0.04em] text-on-surface-secondary">{{ 'site_menu.new_in' | t }}</h2>
+            <a href="{{ new_in.url }}" class="type-overline tracking-[0.04em] no-underline text-on-surface"><span class="nav-word">{{ 'site_menu.view_all' | t }}</span></a>
+          </div>
+          <ul role="list" class="m-0 p-0 list-none grid grid-cols-3 gap-3 md:grid-cols-1 md:gap-4">
+            {%- for product in new_in.products limit: 3 -%}
+              <li class="m-0">
+                <a href="{{ product.url }}" class="group/new flex flex-col gap-2 md:flex-row md:items-center md:gap-4 no-underline text-on-surface">
+                  <span class="block w-full md:w-16 shrink-0 aspect-[3/4] overflow-hidden bg-surface-secondary">
+                    {%- if product.featured_image -%}
+                      {{ product.featured_image | image_url: width: 240 | image_tag: loading: 'lazy', sizes: '(min-width: 768px) 64px, 30vw', widths: '120,240', class: 'size-full object-cover motion-safe:transition-transform motion-safe:duration-700 group-hover/new:scale-105', alt: product.featured_image.alt | default: product.title }}
+                    {%- else -%}
+                      <span class="flex size-full items-end p-1.5 font-heading uppercase font-bold text-[0.55rem] leading-none text-on-surface motion-safe:transition-colors group-hover/new:bg-on-surface group-hover/new:text-surface" aria-hidden="true">{{ 'footer.wordmark' | t }}</span>
+                    {%- endif -%}
+                  </span>
+                  <span class="flex min-w-0 flex-col gap-1">
+                    <span class="type-overline tracking-[0.03em] line-clamp-2">{{ product.title | escape }}</span>
+                    <span class="text-xs text-on-surface-secondary">{{ product.price | money }}</span>
+                  </span>
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </section>
+      {%- endif -%}
+    </div>
+
+    <div class="shrink-0 border-t border-border mx-margin py-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+      {%- comment -%}
+        Search, Account and Bag open the house's own panels (the header shows only Menu and Bag on phones);
+        [data-menu-handoff] makes the menu step aside first (s-menu-stage).
+      {%- endcomment -%}
+      <ul role="list" class="m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-1">
+        <li class="m-0"><button type="button" commandfor="predictive-search" command="show-modal" data-menu-handoff class="inline-flex items-center min-h-touch-target cursor-pointer type-overline tracking-[0.04em] text-on-surface hover:opacity-70">{{ 'general.search' | t }}</button></li>
+        {%- if shop.customer_accounts_enabled -%}
+          <li class="m-0"><button type="button" commandfor="account-panel" command="show-modal" data-menu-handoff class="inline-flex items-center min-h-touch-target cursor-pointer type-overline tracking-[0.04em] text-on-surface hover:opacity-70">{{ 'general.account' | t }}</button></li>
+        {%- endif -%}
+        <li class="m-0"><button type="button" commandfor="cart-drawer" command="show-modal" data-menu-handoff class="inline-flex items-center min-h-touch-target cursor-pointer type-overline tracking-[0.04em] text-on-surface hover:opacity-70">{{ 'cart.title' | t }} ({{ cart.item_count }})</button></li>
+        <li class="m-0"><a href="{{ routes.root_url }}#private-access-form" class="inline-flex items-center min-h-touch-target type-overline tracking-[0.04em] no-underline text-accent hover:opacity-70">{{ 'home.access.label' | t }}</a></li>
+      </ul>
+      {%- if localization_submit != blank -%}
+        {% render 'localization-form', show_country: true, id: 'menu-localization', class: 'md:hidden', submit_button: localization_submit %}
+      {%- endif -%}
+      <div class="flex flex-wrap items-center gap-x-8 gap-y-2">
+        <p class="type-body-sm text-on-surface-secondary m-0">{{ 'footer.signoff' | t }}</p>
+        <s-clock class="type-overline tracking-[0.04em] text-on-surface-secondary" data-time-zone="Europe/Athens">{{ 'site_menu.athens' | t }} <span data-clock-time>{{ 'now' | date: '%H:%M' }}</span></s-clock>
+      </div>
+    </div>
+  </s-menu-stage>
+</dialog>
+<script type="module" src="{{ 's-menu-stage.js' | asset_url }}"></script>
+<script type="module" src="{{ 's-clock.js' | asset_url }}"></script>

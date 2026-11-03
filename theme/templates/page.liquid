@@ -1,0 +1,32 @@
+{%- comment -%}
+  Content pages (About, FAQ, policies), set as a letter: one still portrait photograph holds on the start side
+  (sticky on md+, it opens like a curtain once), while the text reads in a narrow column beside it.
+  Small type only: a wordmark line, the title in heading size, then the page body.
+{%- endcomment -%}
+{%- liquid
+  assign page_image = images['illegant-real-shadow.jpg']
+  if page.handle contains 'faq' or page.handle contains 'contact'
+    assign page_image = images['illegant-real-white-duo.jpg']
+  endif
+-%}
+
+{% block 'container', class: 'w-full max-w-page mx-auto px-margin pt-10 md:pt-16 pb-24 md:pb-36 grid gap-10 md:grid-cols-12 md:gap-10' %}
+  <div class="md:col-span-5">
+    <div class="md:sticky md:top-28">
+      <div class="curtain relative aspect-[4/5] overflow-hidden bg-surface-secondary">
+        {% block 'image', fallback_image: page_image, aspect_ratio: 'aspect-auto', class: 'absolute inset-0 h-full object-[50%_30%]', sizes: '(min-width: 768px) 40vw, 100vw', alt: '', attributes: 'loading="eager" fetchpriority="high"' %}{% endblock %}
+      </div>
+    </div>
+  </div>
+
+  <div class="md:col-span-6 md:col-start-7 flex flex-col gap-8 md:pt-[calc(var(--vh)*14)]">
+    <div class="flex flex-col gap-4 pb-6 border-b border-on-surface">
+      {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface-secondary' %}{{ 'footer.wordmark' | t }}{% endblock %}
+      {% block 'text', tag: 'h1', variant: 'type-display', class: 'font-bold text-[clamp(1rem,1.2vw,1.25rem)] leading-[1.15] tracking-[-0.01em] break-words text-on-surface' %}{{ page.title | escape }}{% endblock %}
+    </div>
+    <h2 class="sr-only">{{ 'page.content_heading' | t }}</h2>
+    {%- if page.content != blank -%}
+      <div class="richtext type-body text-on-surface max-w-[60ch] [&_h2]:uppercase [&_h2]:font-bold [&_h2]:text-base [&_h2]:tracking-[0.02em] [&_h2]:mt-10 [&_h3]:uppercase [&_h3]:font-bold [&_h3]:text-sm [&_h3]:tracking-[0.04em] [&_p]:leading-relaxed">{{ page.content }}</div>
+    {%- endif -%}
+  </div>
+{% endblock %}

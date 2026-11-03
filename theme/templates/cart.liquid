@@ -1,0 +1,129 @@
+{% block 'container', class: 'w-full max-w-page mx-auto px-margin' %}
+<s-cart class="block pt-16 md:pt-24 pb-24" id="cart" data-partials="cart-items,cart-count">
+{% partial 'cart-items' %}
+{%- comment -%} standard_event_data encodes the less-than character as <,
+  so a literal closing-script tag in cart line attributes (note, line-item
+  properties) cannot terminate this <script> early. {%- endcomment -%}
+{%- # theme-check-disable UnknownFilter %}
+<script type="application/json" data-view-event-payload>{{ cart | standard_event_data: 'view', context: 'page' }}</script>
+{%- # theme-check-enable UnknownFilter %}
+{%- comment -%} Collector's ledger header: overline, oversized title and a piece count on the end side, closed by a graphite rule. {%- endcomment -%}
+<div class="flex flex-col gap-4 pb-10 mb-4 border-b border-on-surface md:flex-row md:items-end md:justify-between">
+  <div class="flex flex-col gap-4">
+    {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-accent' %}{{ 'cart.ledger_label' | t }}{% endblock %}
+    {% block 'text', tag: 'h1', variant: 'type-display', class: 'font-bold text-[clamp(1.25rem,1.6vw,1.75rem)] leading-[1.15] tracking-[-0.01em]' %}{{ 'cart.title' | t }}{% endblock %}
+  </div>
+  {% if cart.item_count > 0 %}
+    {% block 'text', variant: 'type-overline', class: 'tracking-[0.03em] text-on-surface md:pb-3' %}{{ 'cart.pieces_count' | t: count: cart.item_count }}{% endblock %}
+  {% endif %}
+</div>
+
+{% if cart.item_count > 0 %}
+  {% form 'cart', cart %}
+    <div class="flex flex-col lg:grid lg:grid-cols-[1fr_420px] lg:gap-20 lg:items-start">
+      {%- comment -%} Cart items {%- endcomment -%}
+      <ol role="list" class="divide-y divide-border">
+        {% for item in cart.items %}
+          {%- comment -%} First 3 rows eager, rest lazy — above-the-fold threshold {%- endcomment -%}
+          {%- if forloop.index <= 3 -%}{%- assign cart_lazy = false -%}{%- else -%}{%- assign cart_lazy = true -%}{%- endif -%}
+          {%- if cart_lazy -%}{%- assign line_image_attributes = 'loading="lazy"' -%}{%- else -%}{%- assign line_image_attributes = 'loading="eager"' -%}{%- endif -%}
+          {%- capture line_media -%}
+            {% if item.image %}{% block 'image', fallback_image: item.image, sizes: '(min-width: 640px) 84px, 68px', widths: '68,84,136,168', alt: item.product.title, class: 'size-full object-cover aspect-3/4', attributes: line_image_attributes %}{% endblock %}{% else %}<span class="flex size-full aspect-3/4 items-end p-1.5 bg-surface-secondary font-heading uppercase font-bold text-[0.6rem] leading-none tracking-[-0.02em] text-on-surface" aria-hidden="true">{{ 'footer.wordmark' | t }}</span>{% endif %}
+          {%- endcapture -%}
+          {%- capture line_unit_price -%}
+            {% block 'price', price: item.original_price, class: 'text-sm font-medium mt-1 [&_span]:text-on-surface' %}{% endblock %}
+          {%- endcapture -%}
+          {%- assign remove_label = 'cart.remove' | t: title: item.product.title -%}
+          {%- capture line_remove_attributes -%}aria-label="{{ remove_label | escape }}" data-variant-id="{{ item.variant_id }}" data-line-key="{{ item.key | escape }}"{%- endcapture -%}
+          {%- capture line_remove_button -%}
+            {% block 'button', commandfor: 'cart', command: '--remove', variant: 'button-ghost', class: 'size-touch-target rounded hover:bg-transparent hover:opacity-70', attributes: line_remove_attributes %}<span class="inline-flex items-center justify-center shrink-0 size-5" aria-hidden="true">{{- 'icon-trash.svg' | inline_asset_content -}}</span>{% endblock %}
+          {%- endcapture -%}
+          {%- liquid
+            assign entry_number = forloop.index
+            if entry_number < 10
+              assign entry_number = entry_number | prepend: '0'
+            endif
+          -%}
+          <li class="grid grid-cols-[2.5rem_1fr] sm:grid-cols-[4rem_1fr] items-start">
+            <span class="type-overline tracking-[0.03em] text-accent pt-7">{{ entry_number }}</span>
+            {% render 'cart-line-item', item: item, cart_id: 'cart', compact: false, media: line_media, unit_price: line_unit_price, remove_button: line_remove_button, class: 'py-7' %}
+          </li>
+        {% endfor %}
+      </ol>
+
+      {%- comment -%} Order summary panel {%- endcomment -%}
+      <div class="mt-10 lg:mt-0 lg:sticky lg:top-8 [view-transition-name:cart-total]">
+        {%- comment -%}
+          Admission ticket: a stone card with a perforated tear line; the two notches are surface-coloured discs cut into its edges.
+        {%- endcomment -%}
+        <div class="relative bg-surface-secondary border border-border p-6 lg:p-8 shadow-[0_40px_80px_-60px_rgb(31_30_28/0.45)]">
+          <div class="flex items-baseline justify-between gap-4 pb-6">
+            {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface' %}{{ 'cart.ticket_label' | t }}{% endblock %}
+            {% block 'text', variant: 'type-overline', class: 'tracking-[0.03em] text-on-surface-secondary' %}{{ 'cart.pieces_count' | t: count: cart.item_count }}{% endblock %}
+          </div>
+
+          {% render 'cart-discount-list', cart: cart, class: 'mb-4' %}
+
+          {%- comment -%} Estimated total row {%- endcomment -%}
+          <div class="flex items-baseline justify-between pt-1 pb-8">
+            <span class="type-overline tracking-[0.03em] text-on-surface-secondary">{{ 'cart.total_label' | t }}</span>
+            <span class="type-display font-bold text-[2.5rem] leading-none tracking-[-0.04em]" data-cart-total><bdi>{{ cart.total_price | money }}</bdi></span>
+          </div>
+
+          <div class="relative -mx-6 lg:-mx-8 mb-8 border-t border-dashed border-on-surface/30 before:absolute before:-start-3 before:-top-3 before:size-6 before:rounded-full before:bg-surface before:border-e before:border-border after:absolute after:-end-3 after:-top-3 after:size-6 after:rounded-full after:bg-surface after:border-s after:border-border" aria-hidden="true"></div>
+
+          {%- comment -%} Checkout button {%- endcomment -%}
+          <span id="checkout-description" class="sr-only">{{ 'cart.checkout_description' | t }}</span>
+          {% block 'button', type: 'submit', name: 'checkout', variant: 'button-primary', class: 'w-full h-13 rounded-button type-overline tracking-[0.04em]', attributes: 'aria-describedby="checkout-description"' %}{{- 'cart.checkout' | t -}}{% endblock %}
+
+          {%- comment -%} Additional checkout buttons are server-rendered by Shopify when accelerated checkout methods are available. The platform class is required by Shopify's injected markup. {%- endcomment -%}
+          {% if additional_checkout_buttons %}
+            <div class="additional-checkout-buttons mt-3 border-t border-border pt-3 [--shopify-accelerated-checkout-button-block-size:var(--spacing-touch-target)] [--shopify-accelerated-checkout-button-border-radius:var(--radius-button)] [--shopify-accelerated-checkout-button-box-shadow:none] [--shopify-accelerated-checkout-skeleton-background-color:var(--color-surface-secondary)]">
+              {{ content_for_additional_checkout_buttons }}
+            </div>
+          {% endif %}
+
+          {%- comment -%} Taxes notice {%- endcomment -%}
+          {% block 'text', variant: 'type-body-sm', class: 'text-on-surface-secondary text-center mt-2 text-xs' %}{{ 'cart.taxes_and_shipping_at_checkout' | t }}{% endblock %}
+
+          {% render 'cart-discount-code', cart_id: 'cart', input_id: 'cart-discount-input', class: 'mt-6' %}
+
+          {%- comment -%} Special instructions accordion {%- endcomment -%}
+          <details class="group border-t border-border">
+            <summary class="flex items-center justify-between py-3 cursor-pointer text-sm font-medium text-on-surface list-none [&::-webkit-details-marker]:hidden">
+              {{ 'cart.note_accordion_label' | t }}
+              <span class="size-4 shrink-0 ms-4 motion-safe:transition-transform motion-safe:duration-200 group-open:rotate-180" aria-hidden="true">{{- 'icon-chevron-down.svg' | inline_asset_content -}}</span>
+            </summary>
+            <div class="pb-4">
+              <label for="cart-note" class="sr-only">{{ 'cart.note_label' | t }}</label>
+              <textarea name="note" id="cart-note" rows="3" class="w-full" placeholder="{{ 'cart.note_placeholder' | t }}">{{ cart.note | escape }}</textarea>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  {% endform %}
+{% else %}
+  {%- comment -%} Empty wall: a vacant dashed frame where a piece would hang, with the two rooms offered as the way back in. {%- endcomment -%}
+  {%- liquid
+    assign empty_women_url = collections['women'].url | default: routes.all_products_collection_url
+    assign empty_men_url = collections['men'].url | default: routes.all_products_collection_url
+  -%}
+  <div class="grid gap-12 py-16 md:grid-cols-12 md:items-center">
+    <div class="md:col-span-5 aspect-[3/2] md:aspect-[4/5] overflow-hidden bg-surface-secondary" aria-hidden="true">
+      {% block 'image', fallback_image: images['illegant-real-black-dress.jpg'], aspect_ratio: 'aspect-auto', class: 'h-full object-[50%_25%]', sizes: '(min-width: 768px) 38vw, 92vw', alt: '', attributes: 'loading="lazy"' %}{% endblock %}
+    </div>
+    <div class="md:col-span-6 md:col-start-7 flex flex-col items-start gap-5">
+      {% block 'text', variant: 'type-display', class: 'font-bold text-[clamp(1.125rem,1.4vw,1.5rem)] leading-[1.15] tracking-[-0.01em]' %}{{ 'cart.empty' | t }}{% endblock %}
+      {% block 'text', variant: 'type-body', class: 'text-on-surface-secondary' %}{{ 'cart.empty_description' | t }}{% endblock %}
+      <div class="flex flex-wrap gap-x-8 gap-y-4 pt-2">
+        {% block 'link', url: empty_women_url, class: 'type-overline tracking-[0.03em] no-underline border-b border-on-surface pb-1 min-h-0' %}{{ 'home.women.title' | t }}{% endblock %}
+        {% block 'link', url: empty_men_url, class: 'type-overline tracking-[0.03em] no-underline border-b border-on-surface pb-1 min-h-0' %}{{ 'home.men.title' | t }}{% endblock %}
+        {% block 'link', url: routes.all_products_collection_url, class: 'type-overline tracking-[0.03em] no-underline border-b border-on-surface pb-1 min-h-0' %}{{ 'cart.continue_shopping' | t }}{% endblock %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endpartial %}
+</s-cart>
+{% endblock %}
