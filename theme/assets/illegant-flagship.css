@@ -248,3 +248,22 @@ label[for$="-sort"] { font-size: 0.75rem; letter-spacing: 0.04em; text-transform
     gap: 0.875rem;
   }
 }
+
+/* ---------- 7. Homepage: every section locks into place on touch screens --------------------------------
+   Native scroll snap, so the stop rides on the finger's own momentum (no second, scripted movement after
+   lifting). One swipe can never skip a section (snap-stop: always). Each room is its own stop on phones.
+   "The edit" is taller than the screen: it locks at its top, then scrolls freely through the pieces.
+   Mouse and trackpad keep the scripted one-gesture-per-section lock in assets/s-screen-lock.js. */
+@media (hover: none) and (pointer: coarse) {
+  html:has(s-screen-lock) { scroll-snap-type: y mandatory; }
+  s-screen-lock > .screen:not(.rooms),
+  s-screen-lock > .rooms > .room {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  @media (min-width: 48rem) {
+    s-screen-lock > .rooms { scroll-snap-align: start; scroll-snap-stop: always; }
+    s-screen-lock > .rooms > .room { scroll-snap-align: none; }
+  }
+  html:has(s-screen-lock) footer { scroll-snap-align: end; }
+}

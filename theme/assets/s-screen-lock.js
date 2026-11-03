@@ -43,10 +43,9 @@ class ScreenLock extends HTMLElement {
       this.#gesture = null;
       this.#current = this.#target = window.scrollY;
     }, { signal });
-    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-      this.#setupTouch(signal);
-      return;
-    }
+    // Touch screens lock with native CSS scroll snap (assets/illegant-flagship.css, section 7), which follows the
+    // finger's own momentum. The scripted touch detent below is kept for reference but no longer armed.
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     this.#current = this.#target = window.scrollY;
     window.addEventListener('wheel', (event) => this.#onWheel(event), { passive: false, signal });
     // Keyboard, scrollbar and anchor jumps stay native; pick up wherever they leave the page.

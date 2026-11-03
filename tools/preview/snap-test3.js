@@ -1,0 +1,12 @@
+const { chromium, devices } = require('playwright');
+(async () => { const b = await chromium.launch(); const c = await b.newContext(devices['iPhone 13']); const p = await c.newPage();
+ await p.goto('http://127.0.0.1:8766/index.html'); await p.waitForTimeout(2500);
+ const step = (dy) => p.evaluate(async (dy) => { scrollBy({ top: dy, behavior: 'smooth' }); await new Promise((r) => setTimeout(r, 1100)); return Math.round(scrollY); }, dy);
+ const down = []; for (let i = 0; i < 12; i++) down.push(await step(150));
+ console.log('small swipes down (150px):', down.join(' '));
+ const up = []; for (let i = 0; i < 4; i++) up.push(await step(-150));
+ console.log('small swipes up (150px):', up.join(' '));
+ await p.evaluate(() => scrollTo({ top: 0, behavior: 'instant' })); await p.waitForTimeout(400);
+ const big = []; for (let i = 0; i < 3; i++) big.push(await step(1400));
+ console.log('hard flicks down (1400px):', big.join(' '));
+ await b.close(); })();

@@ -1,0 +1,15 @@
+const { chromium, devices } = require('playwright');
+(async () => { const b = await chromium.launch(); const c = await b.newContext(devices['iPhone 13']); const p = await c.newPage();
+ await p.goto('http://127.0.0.1:8766/index.html'); await p.waitForTimeout(2500);
+ const cdp = await c.newCDPSession(p);
+ const swipe = async (x, y, dy) => { await cdp.send('Input.synthesizeScrollGesture', { x, y, yDistance: -dy, speed: 1500, gestureSourceType: 'touch' }); await p.waitForTimeout(1300); return p.evaluate(() => Math.round(scrollY)); };
+ console.log('snap on, on ring', await swipe(200, 300, 300));
+ console.log('snap on, on text', await swipe(100, 620, 300));
+ await p.evaluate(() => { document.documentElement.style.scrollSnapType = 'none'; scrollTo(0, 0); });
+ console.log('snap off, on ring', await swipe(200, 300, 300));
+ console.log('snap off, on text', await swipe(100, 620, 300));
+ await p.evaluate(() => { document.documentElement.style.scrollSnapType = ''; scrollTo(0, 0); });
+ await p.waitForTimeout(500);
+ console.log('programmatic 400 ->', await p.evaluate(async () => { scrollTo({ top: 400, behavior: 'instant' }); await new Promise((r) => setTimeout(r, 600)); return Math.round(scrollY); }));
+ console.log('programmatic 200 ->', await p.evaluate(async () => { scrollTo({ top: 200, behavior: 'instant' }); await new Promise((r) => setTimeout(r, 600)); return Math.round(scrollY); }));
+ await b.close(); })();
