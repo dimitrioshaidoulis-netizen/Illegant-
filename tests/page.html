@@ -1,0 +1,56 @@
+<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="stylesheet" href="styles.min.css">
+<script type="module" src="s-dialog.js"></script><style id="qa">  /* QA fixes, 3 November 2026. Kept here (not config/styles.css) because Admin API theme edits do not run the
+     Canvas/Sidekick compiler; plain CSS only, so no utilities are needed from the compiled stylesheet. */
+
+  /* Panel exit: the backdrop fades in step with the scripted exit in assets/s-dialog.js (480ms, ease). */
+  @layer components {
+    .overlay-panel[open][data-closing]::backdrop,
+    #predictive-search.search-sheet[open][data-closing]::backdrop {
+      transition-duration: 480ms;
+      transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+  }
+
+  /* Phones: form fields at 16px or larger, otherwise iOS Safari zooms the page when a field is focused
+     (private access, notify me, contact, password, bag quantities, discount code). The two search lines are already larger. */
+  @media (max-width: 47.99rem) {
+    :is(input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="range"], [type="color"], [type="submit"], [type="button"], [type="image"], [type="file"]), textarea, select):not(#predictive-search-input, #q) {
+      font-size: max(16px, 1rem);
+    }
+  }
+
+  /* Touch screens: no scroll-linked hand-over (.recede). On phones the browser bars resize the viewport these timelines
+     measure, so photographs could jump or slide while scrolling. Mouse and trackpad keep the effect. */
+  @media (hover: none) and (pointer: coarse) {
+    .recede:not(.rooms) > *,
+    .rooms.recede > .room,
+    .rooms.recede > .room > :is(.room__photo, div) {
+      animation: none;
+    }
+  }
+
+  /* The Edit photograph settles in place as it is uncovered instead of drifting upward. */
+  @layer utilities {
+    @media (prefers-reduced-motion: no-preference) {
+      .arrivals-ready .wipe-up img { transform: scale(1.06); }
+    }
+  }
+</style></head>
+<body class="flex flex-col min-h-svh overflow-x-clip bg-surface text-on-surface font-body antialiased">
+<header class="site-header sticky top-0 z-30 border-b" style="height:64px;background:#fff">
+ <button id="open-bag" commandfor="cart-drawer" command="show-modal">BAG</button>
+ <button id="open-search" commandfor="predictive-search" command="show-modal">SEARCH</button>
+</header>
+<main>
+ <div style="height:4000px;background:linear-gradient(#eee,#999)">content</div>
+<form id="f"><input id="email" type="email"><input id="qty" type="number" class="text-xs"></form></main>
+<s-dialog>
+<dialog id="cart-drawer" class="overlay-panel [--panel-closed-transform:translateX(100%)] [:where(&)]:fixed [:where(&)]:inset-y-0 [:where(&)]:inset-s-auto [:where(&)]:inset-e-0 [:where(&)]:w-screen [:where(&)]:h-full min-[480px]:[:where(&)]:w-drawer-width bag-drawer [--panel-backdrop:rgb(31_30_28/0.3)] min-[480px]:w-[min(600px,100vw)] rounded-none" aria-labelledby="t">
+ <div class="flex flex-col h-full"><h2 id="t">Shopping bag</h2><button id="close-bag" commandfor="cart-drawer" command="close" autofocus>Close</button><div class="flex-1 overflow-y-auto p-4">items</div></div>
+</dialog></s-dialog>
+<s-dialog close-on-navigate>
+<dialog id="predictive-search" class="search-sheet overlay-panel [--panel-closed-transform:translateY(-100%)] [--panel-backdrop:rgb(31_30_28/0.22)] fixed inset-x-0 top-0 bottom-auto m-0 w-full rounded-none shadow-none text-on-surface" aria-label="Search">
+ <div style="height:300px"><input id="predictive-search-input" type="search" autofocus><button id="close-search" commandfor="predictive-search" command="close">Close</button></div>
+</dialog></s-dialog>
+</body></html>
