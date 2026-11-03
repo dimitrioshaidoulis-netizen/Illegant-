@@ -25,6 +25,8 @@ class SDialog extends HTMLElement {
   #originalClose = null;
   #closing = null;
   #closePosition = null;
+  /** Scroll offset before the panel opened. The document is locked while a modal is open, so this is where it must land. */
+  #openPosition = null;
   #restoreFrame = 0;
   #cycle = 0;
 
@@ -62,6 +64,8 @@ class SDialog extends HTMLElement {
 
     this.#dialog.addEventListener('cancel', (event) => {
       if (event.defaultPrevented) return;
+      // A non-cancelable cancel (repeated Escape without user activation) closes natively; the close handler restores.
+      if (!event.cancelable) return;
       event.preventDefault();
       this.#dialog.close();
     }, opts);
@@ -71,8 +75,10 @@ class SDialog extends HTMLElement {
       if (this.#dialog.open) return;
       if (this.hasAttribute('reset-on-close')) this.#resetContent();
       this.#restoreFocus();
-      const position = this.#closePosition;
+      // The native close path (non-cancelable Escape, method="dialog" forms) bypasses the wrapper: fall back to the open offset.
+      const position = this.#closePosition || this.#openPosition;
       this.#closePosition = null;
+      this.#openPosition = null;
       const cycle = this.#cycle;
       if (position) {
         window.scrollTo({ ...position, behavior: 'instant' });
@@ -147,6 +153,8 @@ class SDialog extends HTMLElement {
       this.#dialog.dispatchEvent(new Event('s-dialog:opening', { bubbles: true }));
       const left = window.scrollX;
       const top = window.scrollY;
+      // Record once per open cycle (a reopen during the exit animation keeps the original offset).
+      if (!this.#openPosition) this.#openPosition = { left, top };
       const result = this.#originalShowModal(...args);
       window.scrollTo({ left, top, behavior: 'instant' });
       return result;
@@ -154,7 +162,9 @@ class SDialog extends HTMLElement {
     this.#originalClose = this.#dialog.close.bind(this.#dialog);
     this.#dialog.close = (...args) => {
       if (!this.#dialog.open || this.#closing) return;
-      const position = { left: window.scrollX, top: window.scrollY };
+      // Land on the offset from before opening: iOS scrolls the locked page for the on-screen keyboard, and keeping
+      // that shift made the page jump up after every search.
+      const position = this.#openPosition || { left: window.scrollX, top: window.scrollY };
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduced || !this.#dialog.classList.contains('overlay-panel') || !this.#dialog.animate) {
         this.#finishClose(args, position);
@@ -162,15 +172,16 @@ class SDialog extends HTMLElement {
       }
       const style = getComputedStyle(this.#dialog);
       const closed = style.getPropertyValue('--panel-closed-transform').trim() || 'none';
-      // The panel withdraws on a gentle in-out curve and stays fully visible for the first third,
-      // so the exit reads as a slow retreat rather than a cut.
+      // The panel starts moving on the first frame (no dead time after the tap), glides out and lands softly; it only
+      // fades over the last third, when it is mostly off screen, so it is seen leaving rather than vanishing mid-way.
+      // Keep duration/easing in step with the backdrop rule "Panel exit" in config/styles.css.
       const animation = this.#dialog.animate([
         { opacity: style.opacity, transform: style.transform, offset: 0 },
-        { opacity: style.opacity, offset: 0.3 },
+        { opacity: style.opacity, offset: 0.65 },
         { opacity: 0, transform: closed, offset: 1 }
       ], {
-        duration: 600,
-        easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+        duration: 480,
+        easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
         fill: 'forwards'
       });
       this.#closing = animation;

@@ -120,7 +120,9 @@
                   assign now_s = 'now' | date: '%s' | plus: 0
                   assign created_s = product.created_at | date: '%s' | plus: 0
                   assign product_age = now_s | minus: created_s
-                  if product.available == false
+                  if product.available == false and product.tags contains 'coming-soon'
+                    assign card_badge = 'product.coming_soon' | t
+                  elsif product.available == false
                     assign card_badge = 'product.sold_out' | t
                   elsif product_age < 2592000
                     assign card_badge = 'product.badge_new' | t

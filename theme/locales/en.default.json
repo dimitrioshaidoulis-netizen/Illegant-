@@ -240,6 +240,14 @@
     "add_to_cart": "Add to cart",
     "added_to_cart": "Added to cart",
     "sold_out": "Sold out",
+    "coming_soon": "Coming soon",
+    "notify": {
+      "heading": "Notify me",
+      "body": "Leave your email and we will write to you when this piece becomes available.",
+      "email_label": "Email",
+      "submit": "Notify me",
+      "success": "Thank you. We will email you when this piece becomes available."
+    },
     "description": "Description",
     "view_image": "View image: {{ title }}",
     "image_zoom": "Expanded product image"

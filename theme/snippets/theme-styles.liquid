@@ -106,4 +106,41 @@
     .arrivals-ready [data-template="product"] .curtain { clip-path: none; }
     .arrivals-ready [data-template="product"] .curtain img { transform: none; }
   }
+
+  /* QA fixes, 3 November 2026. Kept here (not config/styles.css) because Admin API theme edits do not run the
+     Canvas/Sidekick compiler; plain CSS only, so no utilities are needed from the compiled stylesheet. */
+
+  /* Panel exit: the backdrop fades in step with the scripted exit in assets/s-dialog.js (480ms, ease). */
+  @layer components {
+    .overlay-panel[open][data-closing]::backdrop,
+    #predictive-search.search-sheet[open][data-closing]::backdrop {
+      transition-duration: 480ms;
+      transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+  }
+
+  /* Phones: form fields at 16px or larger, otherwise iOS Safari zooms the page when a field is focused
+     (private access, notify me, contact, password, bag quantities, discount code). The two search lines are already larger. */
+  @media (max-width: 47.99rem) {
+    :is(input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="range"], [type="color"], [type="submit"], [type="button"], [type="image"], [type="file"]), textarea, select):not(#predictive-search-input, #q) {
+      font-size: max(16px, 1rem);
+    }
+  }
+
+  /* Touch screens: no scroll-linked hand-over (.recede). On phones the browser bars resize the viewport these timelines
+     measure, so photographs could jump or slide while scrolling. Mouse and trackpad keep the effect. */
+  @media (hover: none) and (pointer: coarse) {
+    .recede:not(.rooms) > *,
+    .rooms.recede > .room,
+    .rooms.recede > .room > :is(.room__photo, div) {
+      animation: none;
+    }
+  }
+
+  /* The Edit photograph settles in place as it is uncovered instead of drifting upward. */
+  @layer utilities {
+    @media (prefers-reduced-motion: no-preference) {
+      .arrivals-ready .wipe-up img { transform: scale(1.06); }
+    }
+  }
 </style>

@@ -197,6 +197,13 @@
         <script type="application/json" data-product-view-payload>{{ product | standard_event_data: 'view' }}</script>
         {%- # theme-check-enable UnknownFilter %}
         {%- assign product_form_error_id = 'product-form-error-' | append: product.id -%}
+        {%- comment -%} Pieces tagged "coming-soon" have not been released yet: say so instead of "Sold out" (no false scarcity). {%- endcomment -%}
+        {%- liquid
+          assign unavailable_label = 'product.sold_out' | t
+          if product.tags contains 'coming-soon'
+            assign unavailable_label = 'product.coming_soon' | t
+          endif
+        -%}
         {% form 'product', product %}
           {% if product.variants.size > 1 %}
             <s-variant-picker class="block space-y-4" data-updated-message="{{ 'accessibility.variant_updated' | t }}" data-error-message="{{ 'accessibility.update_error' | t | escape }}" data-product-id="{{ product.id }}" data-product-title="{{ product.title | escape }}" data-product-handle="{{ product.handle }}">
@@ -225,7 +232,7 @@
               type="button" prevents keyboard form submission when sold out; aria-disabled is set by the block.
               That leaves no signal the button block can read, so inert states the placeholder has no destination.
             {%- endcomment -%}
-            {% block 'button', type: 'button', inert: true, variant: 'button-primary', class: 'h-13 px-6 rounded-button w-full type-overline tracking-[0.04em]', disabled: true %}{{- 'product.sold_out' | t -}}{% endblock %}
+            {% block 'button', type: 'button', inert: true, variant: 'button-primary', class: 'h-13 px-6 rounded-button w-full type-overline tracking-[0.04em]', disabled: true %}{{- unavailable_label -}}{% endblock %}
           {%- endif -%}
 
           <p id="{{ product_form_error_id }}" data-add-to-cart-error role="alert" hidden class="mt-3 text-sm text-sale"></p>
@@ -247,10 +254,43 @@
             {%- if current_variant.available -%}
               {% block 'button', type: 'submit', name: 'add', variant: 'button-primary', class: 'shrink-0 h-12 px-6 rounded-button type-overline tracking-[0.03em]' %}{{- 'product.add_to_cart' | t -}}{% endblock %}
             {%- else -%}
-              {% block 'button', type: 'button', inert: true, variant: 'button-primary', class: 'shrink-0 h-12 px-6 rounded-button type-overline tracking-[0.03em]', disabled: true %}{{- 'product.sold_out' | t -}}{% endblock %}
+              {% block 'button', type: 'button', inert: true, variant: 'button-primary', class: 'shrink-0 h-12 px-6 rounded-button type-overline tracking-[0.03em]', disabled: true %}{{- unavailable_label -}}{% endblock %}
             {%- endif -%}
           </div>
         {% endform %}
+
+        {%- comment -%}
+          Notify me: an unavailable variant collects interest with Shopify's native customer form (no app). The visitor
+          becomes an email subscriber tagged "notify-me" plus "interest-<product handle>", so demand per piece can be
+          counted in Customers. Lives inside the product-form partial so it follows variant changes; it cannot sit inside
+          the product form (forms do not nest).
+        {%- endcomment -%}
+        {%- unless current_variant.available -%}
+          {%- assign notify_form_id = 'notify-form-' | append: product.id -%}
+          {%- form 'customer', id: notify_form_id, class: 'mt-6 pt-6 border-t border-border' -%}
+            <input type="hidden" name="contact[tags]" value="notify-me, interest-{{ product.handle }}">
+            {%- if form.posted_successfully? -%}
+              <p class="type-body-sm text-on-surface" role="status">{{ 'product.notify.success' | t }}</p>
+            {%- else -%}
+              <h2 class="type-overline tracking-[0.04em] text-on-surface">{{ 'product.notify.heading' | t }}</h2>
+              <p class="mt-2 type-body-sm text-on-surface-secondary">{{ 'product.notify.body' | t }}</p>
+              <div class="mt-3 flex items-end gap-0 border-b border-on-surface">
+                <label class="flex-1 flex flex-col items-start gap-1 text-start">
+                  <span class="sr-only">{{ 'product.notify.email_label' | t }}</span>
+                  <input type="email" name="contact[email]" required autocomplete="email" placeholder="{{ 'product.notify.email_label' | t | escape }}" class="w-full h-12 bg-transparent border-0 px-0 type-body text-on-surface rounded-none focus:outline-none"{% if form.errors %} aria-invalid="true"{% endif %}>
+                </label>
+                {% block 'button', type: 'submit', variant: 'custom', class: 'h-12 shrink-0 ps-4 pe-0 bg-transparent text-on-surface type-overline tracking-[0.04em] font-bold hover:opacity-70' %}{{ 'product.notify.submit' | t }}{% endblock %}
+              </div>
+              {%- if form.errors -%}
+                <p class="mt-3 type-body-sm text-sale" role="alert">{{ form.errors | default_errors }}</p>
+              {%- endif -%}
+              <p class="mt-3 text-xs leading-5 text-on-surface-secondary">
+                {{ 'home.access.consent' | t }}
+                {%- if shop.privacy_policy %} <a href="{{ shop.privacy_policy.url }}" class="text-on-surface underline underline-offset-2 hover:opacity-70">{{ 'home.access.privacy' | t }}</a>{% endif %}
+              </p>
+            {%- endif -%}
+          {%- endform -%}
+        {%- endunless -%}
 
         {% endpartial %}
       </s-product-form>
