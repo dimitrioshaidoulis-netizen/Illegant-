@@ -138,7 +138,7 @@
     "clear_all": "Εκκαθάριση όλων",
     "remove_filter": "Αφαίρεση: {{ filter }}",
     "show_results": "Εμφάνιση αποτελεσμάτων",
-    "value_unavailable": "Unavailable",
+    "value_unavailable": "Μη διαθέσιμο",
     "price_min": "Ελάχιστη τιμή",
     "price_max": "Μέγιστη τιμή",
     "price_to": "έως",
@@ -298,15 +298,15 @@
     "results_for": "Βρέθηκαν {{ count }} αποτελέσματα για: {{ terms }}",
     "no_results": "Δεν βρέθηκαν αποτελέσματα για: {{ terms }}",
     "live_results_announcement": {
-      "one": "{{ count }} result found for {{ terms }}",
-      "other": "{{ count }} results found for {{ terms }}"
+      "one": "Βρέθηκε {{ count }} αποτέλεσμα για: {{ terms }}",
+      "other": "Βρέθηκαν {{ count }} αποτελέσματα για: {{ terms }}"
     },
-    "live_no_results_announcement": "No results found for {{ terms }}"
+    "live_no_results_announcement": "Δεν βρέθηκαν αποτελέσματα για: {{ terms }}"
   },
   "localization": {
-    "form_label": "Region and language",
-    "language": "Language",
-    "country_region_currency": "Country/region and currency",
+    "form_label": "Περιοχή και γλώσσα",
+    "language": "Γλώσσα",
+    "country_region_currency": "Χώρα/περιοχή και νόμισμα",
     "update_language": "Ενημέρωση"
   },
   "cursor": {
