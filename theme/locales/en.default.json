@@ -146,7 +146,13 @@
     "filtering": {
       "show_more": "Show more"
     },
-    "view_all": "View all"
+    "view_all": "View all",
+    "empty": {
+      "label": "ILLEGANT / FIRST EDIT",
+      "heading": "The first edit is taking shape.",
+      "body": "We’re confirming product details, sizing and availability. Pieces will appear here before orders open.",
+      "faq": "Read the FAQ"
+    }
   },
   "header": {
     "menu": "Menu",

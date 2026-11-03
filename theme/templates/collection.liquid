@@ -102,8 +102,9 @@
             else
               assign card_loading = 'lazy'
             endif
-            if forloop.index <= 3
-              assign fetch_priority = 'low'
+            # The first photograph is the preloaded LCP; the rest of the first rows load at normal priority (never low: they are on screen).
+            if forloop.first
+              assign fetch_priority = 'high'
             else
               assign fetch_priority = 'auto'
             endif
@@ -242,10 +243,12 @@
   {% else %}
     {% if collection.products_count == 0 %}
       <div class="max-w-page mx-auto px-margin py-24 text-center">
-        <p class="type-overline tracking-[0.04em] text-on-surface-secondary">ILLEGANT / FIRST EDIT</p>
-        <h2 class="mt-4 font-heading text-[clamp(1.25rem,2vw,2rem)] leading-tight">The first edit is taking shape.</h2>
-        <p class="type-body text-on-surface-secondary max-w-[46ch] mx-auto mt-4">We’re confirming product details, sizing and availability. Pieces will appear here before orders open.</p>
-        <a href="{{ pages['faq'].url | default: routes.root_url }}" class="inline-flex mt-6 items-center gap-2 border-b border-current pb-1 type-overline tracking-[0.04em] no-underline text-on-surface hover:opacity-70">Read the FAQ <span aria-hidden="true">→</span></a>
+        {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface-secondary' %}{{ 'collections.empty.label' | t }}{% endblock %}
+        {% block 'text', tag: 'h2', class: 'mt-4 font-heading text-[clamp(1.25rem,2vw,2rem)] leading-tight' %}{{ 'collections.empty.heading' | t }}{% endblock %}
+        {% block 'text', variant: 'type-body', class: 'text-on-surface-secondary max-w-[46ch] mx-auto mt-4' %}{{ 'collections.empty.body' | t }}{% endblock %}
+        {%- if pages['faq'] != blank -%}
+          <a href="{{ pages['faq'].url }}" class="inline-flex mt-6 items-center gap-2 border-b border-current pb-1 type-overline tracking-[0.04em] no-underline text-on-surface hover:opacity-70">{{ 'collections.empty.faq' | t }} <span aria-hidden="true">→</span></a>
+        {%- endif -%}
       </div>
     {% else %}
       {% block 'text', variant: 'type-body', class: 'text-on-surface-secondary py-24 text-center max-w-page mx-auto px-margin' %}{{ 'collections.no_products' | t }}{% endblock %}
