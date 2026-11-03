@@ -174,7 +174,7 @@ class SDialog extends HTMLElement {
       const closed = style.getPropertyValue('--panel-closed-transform').trim() || 'none';
       // The panel starts moving on the first frame (no dead time after the tap), glides out and lands softly; it only
       // fades over the last third, when it is mostly off screen, so it is seen leaving rather than vanishing mid-way.
-      // Keep duration/easing in step with the backdrop rule "Panel exit" in config/styles.css.
+      // Keep duration/easing in step with the backdrop rule "Panel exit" in snippets/theme-styles.liquid.
       const animation = this.#dialog.animate([
         { opacity: style.opacity, transform: style.transform, offset: 0 },
         { opacity: style.opacity, offset: 0.65 },
