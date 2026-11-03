@@ -222,3 +222,29 @@ label[for$="-sort"] { font-size: 0.75rem; letter-spacing: 0.04em; text-transform
 /* ---------- 5. Product page rows ------------------------------------------------------------------------ */
 /* Size guide arrow nudges toward the reading end. */
 [dir="rtl"] .group\/row:hover .size-guide-arrow { translate: -0.25rem 0; }
+
+/* ---------- 6. Homepage opening: 3D ring on phones -------------------------------------------------------
+   The ring fills the first screen instead of floating small in the middle: larger cards sized to the screen
+   height, the ring centred in the space above the line, the wordmark sized to the screen width, and the line
+   and call to action stacked so small phones never squeeze them. Desktop keeps its own proportions. */
+@media (max-width: 47.99rem) {
+  section.home-screen:has(> s-ring) {
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.75rem;
+  }
+  section.home-screen > s-ring {
+    /* Cards a little larger than before, on a tighter ring, so the turning neighbours stay on screen. */
+    --card-w: clamp(8.5rem, min(47vw, calc(var(--vh) * 28)), 15rem);
+    --ring-radius: calc(var(--card-w) * 1.06);
+    flex: 1 1 auto;
+    height: auto;
+    min-height: calc(var(--card-w) * 2);
+  }
+  section.home-screen > s-ring p[aria-hidden="true"] { font-size: 18.5vw; }
+  section.home-screen:has(> s-ring) > div > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.875rem;
+  }
+}
