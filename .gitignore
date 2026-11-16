@@ -1,3 +1,4 @@
 tools/preview/out/
 tools/preview/shots/
 tools/preview/node_modules
+tests/qa/shots/
