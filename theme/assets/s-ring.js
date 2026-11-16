@@ -6,7 +6,8 @@
  * --ring-turn, --ring-spread and --ring-tilt on the track.
  *
  * Entrance: the cards fade in one by one (CSS) on a tighter ring that opens out while the spin settles
- * from quick to slow. Before this element is defined, CSS holds the same tighter ring, so nothing jumps. With a mouse, the ring leans gently toward the pointer.
+ * from quick to slow. CSS holds the same tighter ring before this element is defined, and connectedCallback keeps
+ * holding it until the first frame, so nothing jumps. With a mouse, the ring leans gently toward the pointer.
  * Reduced motion: no entrance, no auto-rotation, no lean (drag still works).
  * Pauses when off screen or the tab is hidden.
  *
@@ -53,6 +54,10 @@ class Ring extends HTMLElement {
     } else {
       this.#spread = SPREAD_FROM;
       this.#introStart = performance.now();
+      // Hold the starting ring from the moment this element is defined. Until the first frame runs (it waits for
+      // the lead photograph to decode), nothing else carries the value: without it the cards sprang out to the
+      // open ring and back in again on every slow load.
+      this.#track.style.setProperty('--ring-spread', SPREAD_FROM.toFixed(4));
     }
 
     this.#controller = new AbortController();

@@ -267,3 +267,39 @@ label[for$="-sort"] { font-size: 0.75rem; letter-spacing: 0.04em; text-transform
   }
   html:has(s-screen-lock) footer { scroll-snap-align: end; }
 }
+
+/* ---------- 8. Homepage ring: photographs arrive in place (16 November 2026) ----------------------------
+   Two things made the photographs move on entering the site. (a) The entrance slid every card up by 8% of its
+   height while it faded in. (b) Once the script defined <s-ring>, nothing held the starting ring until the lead
+   photograph had decoded, so the cards sprang out to the open ring and back (about 40px sideways on a phone).
+   Now each card fades in where it hangs and the ring only opens outward, once. The script holds the starting
+   ring too (assets/s-ring.js); this rule covers the frames before it runs and browsers without JavaScript. */
+@keyframes ilg-ring-card-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  s-ring [data-ring-track] { --ring-spread: 0.78; }
+  s-ring [data-ring-card] { animation-name: ilg-ring-card-in; }
+}
+
+/* ---------- 9. Panel exit (16 November 2026) --------------------------------------------------------------
+   Search, bag and account panels are closed by a scripted exit (assets/s-dialog.js: EXIT_MS, EXIT_EASING).
+   The backdrop clears over the same time and curve, so the page returns in step with the panel leaving.
+   The menu is a plain dialog closed by CSS; its curtain now takes the same time to close. */
+.overlay-panel[open][data-closing]::backdrop,
+#predictive-search.search-sheet[open][data-closing]::backdrop {
+  transition-duration: 620ms;
+  transition-timing-function: cubic-bezier(0.5, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .site-menu:not([open]) { transition-duration: 620ms; transition-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay-panel[open][data-closing]::backdrop,
+  #predictive-search.search-sheet[open][data-closing]::backdrop { transition-duration: 0s; }
+}
+
+/* ---------- 10. Header: its hairline no longer adds a pixel to the page (16 November 2026) ---------------
+   The header is --header-h tall plus a 1px bottom border, but the homepage screens and the scroll-snap offset
+   are computed from --header-h alone. On touch screens the homepage therefore came to rest 1px down on arrival
+   (everything nudged up a pixel as the page settled) and each screen showed a sliver of the next. The border now
+   sits over the first pixel of the content instead of pushing it. */
+.site-header { margin-bottom: -1px; }

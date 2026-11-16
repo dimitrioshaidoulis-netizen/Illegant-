@@ -100,7 +100,8 @@
   Manifesto: one large brand sentence, straight after the opening photographs so the page alternates image and word. Each word inks in from a pale grey as it scrolls through the screen
   one after another on arrival (s-arrivals); without JavaScript it simply reads in full ink.
 {%- endcomment -%}
-{% block 'container', class: 'screen recede home-screen w-full max-w-page mx-auto px-margin flex flex-col justify-center min-h-[24rem]', attributes: 'aria-label="ILLEGANT"' %}
+{%- comment -%} No aria-label here: two regions named "ILLEGANT" gave screen readers two identical landmarks. The sentence speaks for itself. {%- endcomment -%}
+{% block 'container', class: 'screen recede home-screen w-full max-w-page mx-auto px-margin flex flex-col justify-center min-h-[24rem]' %}
   {%- assign manifesto_words = 'home.manifesto' | t | split: ' ' -%}
   {% block 'text', tag: 'p', variant: 'type-display', class: 'manifesto font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,1.9vw,2rem)] text-on-surface max-w-[22ch]' %}{% for word in manifesto_words %}<span class="fill-word" style="--i: {{ forloop.index0 }}">{{ word }}</span> {% endfor %}{% endblock %}
 {% endblock %}
@@ -122,7 +123,8 @@
     endif
   endfor
 -%}
-{% block 'container', class: 'screen recede rooms curtain', attributes: 'aria-label="ILLEGANT"' %}
+{%- capture rooms_attributes -%}aria-label="{{ 'collections.browse_heading' | t | escape }}"{%- endcapture -%}
+{% block 'container', class: 'screen recede rooms curtain', attributes: rooms_attributes %}
   <div class="room snap-stop group/room text-surface">
     {% block 'image', fallback_image: women_image, aspect_ratio: 'aspect-auto', class: 'room__photo absolute inset-0 h-full object-[50%_32%]', sizes: '(min-width: 768px) 60vw, 100vw', alt: women_alt, attributes: 'loading="lazy"' %}{% endblock %}
     <span class="pointer-events-none absolute inset-0 bg-linear-to-t from-on-surface/80 via-on-surface/10 to-transparent" aria-hidden="true"></span>
