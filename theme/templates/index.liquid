@@ -97,17 +97,7 @@
 {%- endif -%}
 
 {%- comment -%}
-  Manifesto: one large brand sentence, straight after the opening photographs so the page alternates image and word. Each word inks in from a pale grey as it scrolls through the screen
-  one after another on arrival (s-arrivals); without JavaScript it simply reads in full ink.
-{%- endcomment -%}
-{%- comment -%} No aria-label here: two regions named "ILLEGANT" gave screen readers two identical landmarks. The sentence speaks for itself. {%- endcomment -%}
-{% block 'container', class: 'screen recede home-screen w-full max-w-page mx-auto px-margin flex flex-col justify-center min-h-[24rem]' %}
-  {%- assign manifesto_words = 'home.manifesto' | t | split: ' ' -%}
-  {% block 'text', tag: 'p', variant: 'type-display', class: 'manifesto font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,1.9vw,2rem)] text-on-surface max-w-[22ch]' %}{% for word in manifesto_words %}<span class="fill-word" style="--i: {{ forloop.index0 }}">{{ word }}</span> {% endfor %}{% endblock %}
-{% endblock %}
-
-{%- comment -%}
-  Rooms: Women and Men side by side straight after the opening (stacked on mobile). The hovered room widens and the other
+  Rooms: Women and Men side by side straight after the opening (stacked on mobile, one full screen each). The hovered room widens and the other
   dims; each carries its real piece count and its sub-categories from the main menu. One stretched link per room keeps the
   whole photograph clickable while the sub-links stay separate (no nested anchors). Photos open like a curtain on scroll.
 {%- endcomment -%}
@@ -179,8 +169,8 @@
 {% block 'featured-collection', collection: featured_collection, class: 'screen relative bg-surface pt-12 md:pt-16 pb-24 md:pb-36' %}
   <div class="w-full max-w-page mx-auto px-margin grid gap-12 md:grid-cols-12 md:gap-10">
     <div class="md:col-span-5">
-      <div class="md:sticky md:top-28 flex flex-col gap-6">
-        <div class="wipe-up relative aspect-[4/5] overflow-hidden bg-surface-secondary">
+      <div class="edit-cover md:sticky md:top-28 flex flex-col gap-6">
+        <div class="edit-cover__photo wipe-up relative aspect-[4/5] overflow-hidden bg-surface-secondary">
           {% block 'image', fallback_image: edit_image, aspect_ratio: 'aspect-auto', class: 'absolute inset-0 h-full object-[50%_30%]', sizes: '(min-width: 768px) 40vw, 100vw', alt: '', attributes: 'loading="lazy"' %}{% endblock %}
         </div>
         <div class="flex items-end justify-between gap-6">
@@ -241,6 +231,17 @@
       {%- endif -%}
     </div>
   </div>
+{% endblock %}
+
+{%- comment -%}
+  Manifesto (the letters section): one large brand sentence whose words ink in one after another on arrival (s-arrivals);
+  without JavaScript it simply reads in full ink. It closes the page just before the email invitation (17 November 2026:
+  order is opening > rooms > the edit > manifesto > private access).
+{%- endcomment -%}
+{%- comment -%} No aria-label here: two regions named "ILLEGANT" gave screen readers two identical landmarks. The sentence speaks for itself. {%- endcomment -%}
+{% block 'container', class: 'screen recede home-screen w-full max-w-page mx-auto px-margin flex flex-col justify-center min-h-[24rem]' %}
+  {%- assign manifesto_words = 'home.manifesto' | t | split: ' ' -%}
+  {% block 'text', tag: 'p', variant: 'type-display', class: 'manifesto font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,1.9vw,2rem)] text-on-surface max-w-[22ch]' %}{% for word in manifesto_words %}<span class="fill-word" style="--i: {{ forloop.index0 }}">{{ word }}</span> {% endfor %}{% endblock %}
 {% endblock %}
 
 {%- comment -%}

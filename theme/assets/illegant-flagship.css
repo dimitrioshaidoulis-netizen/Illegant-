@@ -468,3 +468,49 @@ html:has([data-password-page]) { scrollbar-gutter: auto; background: var(--color
   .pw__line:nth-child(4) { animation-delay: 660ms; }
 }
 @keyframes ilg-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- 12. Homepage on phones: every screen fills the visible screen (17 November 2026) -------------
+   The full-screen feel comes from section sizes only. Nothing here snaps, locks or moves the page: touch scrolling
+   stays native and free (section 7). Scoped to the homepage (:has(s-screen-lock)); other pages are unchanged.
+
+   One screen = the small viewport minus the sticky header: calc(var(--vh) * 100 - var(--header-h)). The small
+   viewport (svh) is the visible area while Safari's and Chrome's toolbars are shown, so a screen is never taller than
+   what can be seen and nothing at its bottom edge sits under a toolbar. When the toolbars slide away, a screen stays
+   the same size (a strip of the next one shows below) instead of resizing while the finger moves: a dvh-sized page
+   would change every section's height mid-scroll and make the page jump. */
+@media (max-width: 47.99rem) {
+  /* Theme-wide the unit is min(1svh, 2.3vw). The cap only bites on very tall, narrow screens (e.g. 344x882), where
+     every homepage screen ended 90px short of the bottom. On the homepage on phones the unit is the small viewport. */
+  :root:has(s-screen-lock) { --vh: 1vh; }
+  @supports (height: 1svh) {
+    :root:has(s-screen-lock) { --vh: 1svh; }
+  }
+
+  /* The edit: its opening (photograph, title, View all) fills the first screen; the pieces follow below it at their
+     own pace. 3rem = the section's top padding on phones (pt-12); 1.5rem of air is kept under the title inside the
+     same screen. The photograph takes the height that is left instead of a fixed 4:5, never less than 16rem and never
+     taller than 1.6 times its width (the edit photograph is 2:3; beyond that its sides would be cropped away). On a
+     very tall, narrow screen the capped opening is centred in the screen. object-fit: cover, framed at 50% 30%. */
+  s-screen-lock .edit-cover {
+    min-height: calc(var(--vh) * 100 - var(--header-h) - 3rem);
+    padding-bottom: 1.5rem;
+    justify-content: center;
+  }
+  s-screen-lock .edit-cover__photo {
+    aspect-ratio: auto;
+    flex: 1 1 auto;
+    min-height: 16rem;
+    max-height: calc((100vw - 2 * var(--spacing-margin)) * 1.6);
+  }
+
+  /* Email signup: at least one screen, and taller only when its content needs it, so the form, the consent line and
+     the privacy link are never cut off. It used to be forced to 36rem (576px): taller than the screen on a 320x568
+     phone (the privacy link fell below the fold) and 12px too tall on a 375x629 one. */
+  s-screen-lock > .access {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: calc(var(--vh) * 100 - var(--header-h));
+  }
+  s-screen-lock > .access > .lines { height: auto; flex: 1 0 auto; }
+}
