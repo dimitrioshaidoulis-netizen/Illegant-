@@ -11,6 +11,7 @@
 
 Then from `tests/qa`:
 
+    node home-layout.test.js    # 230 checks: homepage order and one-screen fit on 13 phone sizes + 2 desktops (pass a page file, e.g. index-el, for Greek)
     node home-scroll.test.js    # 44 checks: homepage scrolling with real touch events on 3 phones and a tablet
     node home-wheel.desktop.js  # desktop probe: wheel, keyboard and scrollbar resting positions (compare with diff)
     node dialogs.test.js        # 96 checks: Search / Bag open and close, page offset, focus (exit code 1 on failure)

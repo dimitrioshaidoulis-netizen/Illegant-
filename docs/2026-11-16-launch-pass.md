@@ -198,3 +198,48 @@ identical resting positions before and after. The panel test (96 checks) and the
   freely; a hard flick stops at the next section top). That is the existing desktop behaviour and was left alone
   because the report concerns phones. Removing it is a one-line change if wanted.
 - The fix is on the unpublished theme copy. The published theme still snaps until that copy is published.
+
+## 9. Addendum, 17 November 2026: homepage order and full-screen sections on phones
+
+**Requested.** Order: Ring → Women/Men → letters section → email signup (last). Every main section fills the visible
+screen on phones. Scrolling stays natural: no snapping, no locking, no scripted movement.
+
+**Order now:** Ring → Women / Men → The edit (products) → manifesto → Private access (email). The "letters section" is the
+manifesto, the large sentence whose words ink in ("Quiet in cut. Certain in presence…"), the only text section on the
+page and the one that sat between the Ring and Women/Men. The edit was not part of the request. It stays between Women/Men and the
+manifesto, the only place that keeps Women/Men directly after the Ring and the manifesto directly before the email
+section. The global site footer still follows the email section, as on every page. The Ring is unchanged.
+
+**How the full-screen sizing works** (`assets/illegant-flagship.css` §12, phones only, homepage only):
+- One screen = small viewport height (svh) minus the sticky header. svh is the visible area while the browser
+  toolbars are shown, so a section is never taller than what can be seen and nothing at its bottom sits under a toolbar.
+  When Safari's toolbars slide away a section keeps its size (a strip of the next section shows below) rather than
+  resizing mid-scroll, which would make the page jump.
+- The theme caps that unit at 2.3 × the screen width; on very tall, narrow screens (344×882) every homepage section was
+  90px short. On the homepage on phones the cap is removed.
+- Ring, Women, Men, manifesto: exactly one screen (unchanged on almost all phones).
+- The edit: its opening (photograph, title, View all) now fills the first screen; the photograph takes the remaining
+  height instead of a fixed 4:5, between 16rem and 1.6 × its width. The pieces follow below at the visitor's pace.
+- Email signup: at least one screen, taller only if the content needs it. It was forced to 576px, which on a 320×568
+  phone pushed the privacy link below the fold.
+
+**Not active on touch devices** (verified in every run): `scroll-snap-type` is `none`, the document is never
+`overflow: hidden`, and no script listens to touch. The scroll script returns unless the device has a mouse.
+
+**Tests (all Chromium emulation; no physical device, no Safari):**
+- `tests/qa/home-layout.test.js` on 13 phone viewports from 320×568 to 344×882, incl. iPhone SE, 13 mini, 14, 15,
+  16 Pro, 15/16 Pro Max, Galaxy S8/S24, Pixel 7: order, each screen's height against the visible screen, text and
+  controls cut off, sideways overflow, snapping and lock.
+- `tests/qa/home-scroll.test.js`: real touch events (short, slow, long, reverse, repeated swipes, stops near section
+  boundaries) on three phones and a tablet.
+- Panel, password-page and ring-entrance tests, Theme Check and an accessibility scan re-run unchanged.
+
+**Limits.**
+- Safari's collapsing toolbars cannot be reproduced in Chromium; the svh behaviour above follows the CSS
+  specification and needs a check on an iPhone.
+- On laptops around 1280×720 The edit's title starts below the screen when the section is reached (757px on a 720px
+  screen, the same before and after this change; desktop sizing was not touched). Fixable separately.
+- Desktop mouse and trackpad scrolling is handled by the existing wheel script, unchanged. In this test environment
+  its result varies between runs on both the old and the new code (a hard flick occasionally crosses two sections when
+  the simulated wheel events stall), so it is not compared before/after.
+
