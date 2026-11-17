@@ -11,6 +11,8 @@
 
 Then from `tests/qa`:
 
+    node home-scroll.test.js    # 44 checks: homepage scrolling with real touch events on 3 phones and a tablet
+    node home-wheel.desktop.js  # desktop probe: wheel, keyboard and scrollbar resting positions (compare with diff)
     node dialogs.test.js        # 96 checks: Search / Bag open and close, page offset, focus (exit code 1 on failure)
     node password.test.js       # 32 checks: password page, English and Greek (render Greek to out/password-el.html)
     node trace-home-entry.js [scriptDelayMs] [imageDelayMs]   # per-frame position of the ring photographs

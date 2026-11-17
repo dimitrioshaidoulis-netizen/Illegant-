@@ -155,3 +155,46 @@ preview link on the phone. For the password page add `/password` to the preview 
 7. Buy and connect a domain; set up a brand mailbox; write the store description in Greek and English.
 8. Make the GitHub repository private.
 9. Measure Core Web Vitals on the real storefront, then remove the password.
+
+## 8. Addendum, 17 November 2026: homepage scrolling on phones
+
+**Reported.** On phones the homepage did not scroll naturally: a swipe was forced toward the next section, a slow swipe
+that stopped before the next section jumped back, and the page could not rest half-way through a section.
+
+**Root cause.** CSS only, in `assets/illegant-flagship.css` section 7, applied to touch screens on the homepage:
+`html:has(s-screen-lock) { scroll-snap-type: y mandatory }`, with `scroll-snap-align: start` and
+`scroll-snap-stop: always` on every homepage screen and each room, and `scroll-snap-align: end` on the footer.
+"Mandatory" means the page may only rest on a section top; "always" means one swipe can never pass the next section.
+No JavaScript was involved on touch screens: `s-screen-lock.js` returns before adding any listener unless the device
+has a mouse, and its old touch code is never called. The rules were added on 3 November as a deliberate "lock per
+section"; the behaviour reported is exactly what they do.
+
+**Change.** Those rules are removed and nothing replaces them. `html:has(s-screen-lock)` now states
+`scroll-snap-type: none`. Section sizes, photographs and arrival effects are unchanged. In `assets/s-screen-lock.js` only
+comments changed. No other page is affected (the selector matches the homepage only).
+
+**Measured with real touch events** (finger down, moves, lift; `tests/qa/home-scroll.test.js`), iPhone 13 emulation:
+
+| Scenario | Before | After |
+|---|---|---|
+| A. Short swipe, 120px | followed the finger 123px, then pulled back to the start | rests 123px down |
+| B. Flick | stopped exactly on the next section top (600px) | travels on 2,352px (3.9 sections) and rests mid-section |
+| C. Slow swipe stopped half-way (300 of 600px) | carried on to the next section | rests at 302px |
+| D. Reverse swipe, 200px up | pulled back to the start | rests 203px up |
+| E. Eight swipes of 150px | 0px moved in total | 154px each, 1,233px in total |
+| F. Stop 60px before / 70px past a section top | forced onto the section top | rests where it stopped (542 / 672) |
+
+After the change all 44 checks pass on four touch devices: iPhone 13 (390×664), Pixel 7 (412×839), a 320×568 phone and
+an 810×1080 tablet. Arrival effects still play on every section scrolled past, and the document is never locked.
+
+**Desktop.** `tests/qa/home-wheel.desktop.js` (1440×900: wheel notches, trackpad flicks, keyboard, scrollbar) gives
+identical resting positions before and after. The panel test (96 checks) and the ring-entrance trace still pass.
+
+**Limits.**
+- Tested in Chromium with touch emulation, not on a physical phone and not in Safari. The removed rules were plain CSS
+  that every browser honours, so the change itself is engine-independent; iOS rubber-banding and toolbar behaviour
+  were not observed.
+- With a mouse or trackpad the homepage still limits one wheel gesture to the next section (small wheel moves rest
+  freely; a hard flick stops at the next section top). That is the existing desktop behaviour and was left alone
+  because the report concerns phones. Removing it is a one-line change if wanted.
+- The fix is on the unpublished theme copy. The published theme still snaps until that copy is published.
