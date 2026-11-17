@@ -249,21 +249,268 @@ label[for$="-sort"] { font-size: 0.75rem; letter-spacing: 0.04em; text-transform
   }
 }
 
-/* ---------- 7. Homepage: every section locks into place on touch screens --------------------------------
-   Native scroll snap, so the stop rides on the finger's own momentum (no second, scripted movement after
-   lifting). One swipe can never skip a section (snap-stop: always). Each room is its own stop on phones.
-   "The edit" is taller than the screen: it locks at its top, then scrolls freely through the pieces.
-   Mouse and trackpad keep the scripted one-gesture-per-section lock in assets/s-screen-lock.js. */
-@media (hover: none) and (pointer: coarse) {
-  html:has(s-screen-lock) { scroll-snap-type: y mandatory; }
-  s-screen-lock > .screen:not(.rooms),
-  s-screen-lock > .rooms > .room {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+/* ---------- 7. Homepage on touch screens: native, free scrolling (17 November 2026) ----------------------
+   This section used to switch on CSS scroll snap for phones and tablets:
+     html:has(s-screen-lock) { scroll-snap-type: y mandatory }  plus  scroll-snap-align: start and
+     scroll-snap-stop: always  on every homepage screen and each room, and  scroll-snap-align: end  on the footer.
+   "mandatory" means the page may only rest on a section top, and "always" means one swipe can never pass the next
+   one. Measured with real touch input: a 120px swipe followed the finger and was pulled back to where it began;
+   a swipe that stopped half-way through a section was carried on to the next section; a flick stopped exactly on
+   the next section top; eight short swipes in a row moved the page 0px in total.
+   Those rules are removed and nothing replaces them: the page follows the finger, keeps its momentum and rests
+   wherever it stops. Section sizes, photographs and arrival effects are unchanged.
+   The compiled bundle still carries  scroll-snap-align: start  on .home-screen and .rooms; without a
+   scroll-snap-type on the scroller those declarations do nothing. The rule below states the intent explicitly and
+   keeps a later stylesheet from switching snapping back on by accident.
+   Mouse and trackpad are untouched (assets/s-screen-lock.js handles the wheel only). */
+html:has(s-screen-lock) { scroll-snap-type: none; }
+
+/* ---------- 8. Homepage ring: photographs arrive in place (16 November 2026) ----------------------------
+   Two things made the photographs move on entering the site. (a) The entrance slid every card up by 8% of its
+   height while it faded in. (b) Once the script defined <s-ring>, nothing held the starting ring until the lead
+   photograph had decoded, so the cards sprang out to the open ring and back (about 40px sideways on a phone).
+   Now each card fades in where it hangs and the ring only opens outward, once. The script holds the starting
+   ring too (assets/s-ring.js); this rule covers the frames before it runs and browsers without JavaScript. */
+@keyframes ilg-ring-card-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  s-ring [data-ring-track] { --ring-spread: 0.78; }
+  s-ring [data-ring-card] { animation-name: ilg-ring-card-in; }
+}
+
+/* ---------- 9. Panel exit (16 November 2026) --------------------------------------------------------------
+   Search, bag and account panels are closed by a scripted exit (assets/s-dialog.js: EXIT_MS, EXIT_EASING).
+   The backdrop clears over the same time and curve, so the page returns in step with the panel leaving.
+   The menu is a plain dialog closed by CSS; its curtain now takes the same time to close. */
+.overlay-panel[open][data-closing]::backdrop,
+#predictive-search.search-sheet[open][data-closing]::backdrop {
+  transition-duration: 620ms;
+  transition-timing-function: cubic-bezier(0.5, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .site-menu:not([open]) { transition-duration: 620ms; transition-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay-panel[open][data-closing]::backdrop,
+  #predictive-search.search-sheet[open][data-closing]::backdrop { transition-duration: 0s; }
+}
+
+/* ---------- 10. Header: its hairline no longer adds a pixel to the page (16 November 2026) ---------------
+   The header is --header-h tall plus a 1px bottom border, but the homepage screens and the scroll-snap offset
+   are computed from --header-h alone. On touch screens the homepage therefore came to rest 1px down on arrival
+   (everything nudged up a pixel as the page settled) and each screen showed a sliver of the next. The border now
+   sits over the first pixel of the content instead of pushing it. */
+.site-header { margin-bottom: -1px; }
+
+/* ---------- 11. Password page: the front door while the store is closed (16 November 2026) --------------
+   templates/password.liquid. One photograph, the invitation written into its shadow (the homepage's Private
+   access screen, standing alone). Email sign-up on the page; "Enter with password" as a word in the top bar.
+   No JavaScript is needed for the page or the sign-up; only the password dialog is scripted. */
+.pw {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--color-on-surface);
+  color: var(--color-surface);
+}
+/* The page is exactly one screen tall: no scrollbar gutter (it showed as a pale strip beside the dark photograph). */
+html:has([data-password-page]) { scrollbar-gutter: auto; background: var(--color-on-surface); }
+.pw__photo { position: absolute; inset: 0; z-index: -2; background: #2b2a27; }
+.pw__photo .pw__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 45% 28%; }
+.pw__shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgb(0 0 0 / 0.42) 0%, rgb(0 0 0 / 0) 22%),
+    linear-gradient(to top, rgb(0 0 0 / 0.9) 0%, rgb(0 0 0 / 0.62) 36%, rgb(0 0 0 / 0) 70%);
+}
+.pw__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4rem;
+  padding: env(safe-area-inset-top, 0px) var(--spacing-margin) 0;
+}
+.pw__wordmark {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  color: var(--color-surface);
+}
+.pw .pw__enter {
+  min-height: 2.75rem;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.4em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-surface);
+  transition: opacity 300ms var(--ease-ui);
+  /* Greek is longer ("Είσοδος με κωδικό πρόσβασης"): let it take two lines on narrow phones instead of pushing the wordmark. */
+  max-width: 62%;
+  white-space: normal;
+  text-align: end;
+  line-height: 1.5;
+}
+.pw .pw__enter:hover { background-color: transparent; opacity: 0.7; }
+.pw :is(.pw__enter, .pw__submit):focus-visible { outline: 1px solid var(--color-surface); outline-offset: 4px; }
+.pw__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 34rem;
+  margin-top: auto;
+  padding: 3rem var(--spacing-margin) 2rem;
+}
+.pw .pw__eyebrow { margin: 0; letter-spacing: 0.04em; color: rgb(255 255 255 / 0.72); }
+.pw .pw__title {
+  margin: 0;
+  max-width: 16ch;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.2vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  color: var(--color-surface);
+}
+.pw .pw__body { margin: 0; max-width: 34ch; color: rgb(255 255 255 / 0.82); }
+.pw__form { width: 100%; padding-top: 0.5rem; color: var(--color-surface); }
+.pw__field { display: flex; align-items: flex-end; border-bottom: 1px solid rgb(255 255 255 / 0.6); transition: border-color 300ms var(--ease-ui); }
+.pw__field:focus-within { border-color: var(--color-surface); }
+.pw__label { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+.pw__label > span { letter-spacing: 0.04em; color: rgb(255 255 255 / 0.62); }
+.pw .pw__label input {
+  width: 100%;
+  height: 3rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  font-size: max(16px, 1rem); /* 16px or more: no zoom on focus in iOS Safari */
+  color: var(--color-surface);
+}
+.pw .pw__label input:-webkit-autofill { -webkit-text-fill-color: var(--color-surface); transition: background-color 9999s; }
+.pw .pw__submit {
+  flex: none;
+  height: 3rem;
+  padding: 0 0 0 1rem;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-surface);
+  transition: opacity 300ms var(--ease-ui);
+}
+.pw .pw__submit:hover { background: transparent; opacity: 0.7; }
+[dir="rtl"] .pw .pw__submit { padding: 0 1rem 0 0; }
+.pw__error { margin: 0.75rem 0 0; font-size: 0.875rem; color: var(--color-surface); }
+.pw__consent { margin: 1rem 0 0; max-width: 44ch; font-size: 0.75rem; line-height: 1.25rem; color: rgb(255 255 255 / 0.62); }
+.pw__consent a { color: var(--color-surface); text-decoration: underline; text-underline-offset: 2px; }
+.pw__consent a:hover { opacity: 0.7; }
+.pw__noscript { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgb(255 255 255 / 0.3); }
+.pw__noscript input { color: var(--color-on-surface); }
+.pw__legal {
+  margin: 0;
+  padding: 0 var(--spacing-margin) max(1.25rem, env(safe-area-inset-bottom, 0px));
+  font-size: 0.75rem;
+  color: rgb(255 255 255 / 0.55);
+}
+/* Password dialog: square and quiet like the store's other panels; type follows the house scale. */
+.pw .pw-dialog { border-radius: 0; color: var(--color-on-surface); }
+.pw .pw-dialog .pw-dialog__title { font-weight: 700; font-size: clamp(1.25rem, 1.6vw, 1.75rem); line-height: 1.15; letter-spacing: -0.01em; }
+.pw .pw-dialog input { border-radius: 0; font-size: max(16px, 1rem); }
+
+@media (min-width: 48rem) {
+  .pw__bar { min-height: 5rem; padding-inline: max(var(--spacing-margin), 2.5rem); }
+  .pw__wordmark { font-size: 1.5rem; }
+  /* The copy stands in the empty wall beside the figure, at the reading end. */
+  .pw__copy { max-width: 36rem; margin-inline-start: auto; padding: 4rem 3.5rem 3rem; }
+  .pw__legal { padding-inline: max(var(--spacing-margin), 2.5rem); }
+  .pw__photo .pw__img { object-position: 50% 30%; }
+  .pw__shade {
+    background:
+      linear-gradient(to bottom, rgb(0 0 0 / 0.4) 0%, rgb(0 0 0 / 0) 20%),
+      linear-gradient(to left, rgb(0 0 0 / 0.72) 0%, rgb(0 0 0 / 0.3) 40%, rgb(0 0 0 / 0) 62%),
+      linear-gradient(to top, rgb(0 0 0 / 0.5) 0%, rgb(0 0 0 / 0) 46%);
   }
-  @media (min-width: 48rem) {
-    s-screen-lock > .rooms { scroll-snap-align: start; scroll-snap-stop: always; }
-    s-screen-lock > .rooms > .room { scroll-snap-align: none; }
+  [dir="rtl"] .pw__shade {
+    background:
+      linear-gradient(to bottom, rgb(0 0 0 / 0.4) 0%, rgb(0 0 0 / 0) 20%),
+      linear-gradient(to right, rgb(0 0 0 / 0.72) 0%, rgb(0 0 0 / 0.3) 40%, rgb(0 0 0 / 0) 62%),
+      linear-gradient(to top, rgb(0 0 0 / 0.5) 0%, rgb(0 0 0 / 0) 46%);
   }
-  html:has(s-screen-lock) footer { scroll-snap-align: end; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* The photograph (LCP) is visible from the first frame and only settles; the lines follow, in place. */
+  .pw__photo .pw__img { animation: ilg-settle 2400ms var(--ease-arrive) both; }
+  .pw__line { animation: ilg-fade 900ms var(--ease-arrive) both; }
+  .pw__line:nth-child(1) { animation-delay: 300ms; }
+  .pw__line:nth-child(2) { animation-delay: 420ms; }
+  .pw__line:nth-child(3) { animation-delay: 540ms; }
+  .pw__line:nth-child(4) { animation-delay: 660ms; }
+}
+@keyframes ilg-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- 12. Homepage on phones: every screen fills the visible screen (17 November 2026) -------------
+   The full-screen feel comes from section sizes only. Nothing here snaps, locks or moves the page: touch scrolling
+   stays native and free (section 7). Scoped to the homepage (:has(s-screen-lock)); other pages are unchanged.
+
+   One screen = the small viewport minus the sticky header: calc(var(--vh) * 100 - var(--header-h)). The small
+   viewport (svh) is the visible area while Safari's and Chrome's toolbars are shown, so a screen is never taller than
+   what can be seen and nothing at its bottom edge sits under a toolbar. When the toolbars slide away, a screen stays
+   the same size (a strip of the next one shows below) instead of resizing while the finger moves: a dvh-sized page
+   would change every section's height mid-scroll and make the page jump. */
+@media (max-width: 47.99rem) {
+  /* Theme-wide the unit is min(1svh, 2.3vw). The cap only bites on very tall, narrow screens (e.g. 344x882), where
+     every homepage screen ended 90px short of the bottom. On the homepage on phones the unit is the small viewport. */
+  :root:has(s-screen-lock) { --vh: 1vh; }
+  @supports (height: 1svh) {
+    :root:has(s-screen-lock) { --vh: 1svh; }
+  }
+
+  /* The edit: its opening (photograph, title, View all) fills the first screen; the pieces follow below it at their
+     own pace. 3rem = the section's top padding on phones (pt-12); 1.5rem of air is kept under the title inside the
+     same screen. The photograph takes the height that is left instead of a fixed 4:5, never less than 16rem and never
+     taller than 1.6 times its width (the edit photograph is 2:3; beyond that its sides would be cropped away). On a
+     very tall, narrow screen the capped opening is centred in the screen. object-fit: cover, framed at 50% 30%. */
+  s-screen-lock .edit-cover {
+    min-height: calc(var(--vh) * 100 - var(--header-h) - 3rem);
+    padding-bottom: 1.5rem;
+    justify-content: center;
+  }
+  s-screen-lock .edit-cover__photo {
+    aspect-ratio: auto;
+    flex: 1 1 auto;
+    min-height: 16rem;
+    max-height: calc((100vw - 2 * var(--spacing-margin)) * 1.6);
+  }
+
+  /* Email signup: at least one screen, and taller only when its content needs it, so the form, the consent line and
+     the privacy link are never cut off. It used to be forced to 36rem (576px): taller than the screen on a 320x568
+     phone (the privacy link fell below the fold) and 12px too tall on a 375x629 one. */
+  s-screen-lock > .access {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: calc(var(--vh) * 100 - var(--header-h));
+  }
+  s-screen-lock > .access > .lines { height: auto; flex: 1 0 auto; }
 }

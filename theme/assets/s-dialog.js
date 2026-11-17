@@ -16,6 +16,12 @@
  * Commands:
  *   --toggle-password — toggle the password input named by event.source aria-controls
  */
+/** Scripted exit of overlay panels. The backdrop rule in assets/illegant-flagship.css uses the same values. */
+const EXIT_MS = 620;
+const EXIT_EASING = 'cubic-bezier(0.5, 0, 0.2, 1)';
+/** How long the restored page offset is defended after a close (phone keyboard and browser bars settling). */
+const SETTLE_MS = 700;
+
 class SDialog extends HTMLElement {
   #dialog;
   #ac;
@@ -29,6 +35,8 @@ class SDialog extends HTMLElement {
   #openPosition = null;
   #restoreFrame = 0;
   #cycle = 0;
+  /** Stops the short watch that keeps the restored offset in place while the on-screen keyboard folds away. */
+  #settle = null;
 
   connectedCallback() {
     this.#dialog = this.querySelector('dialog');
@@ -81,13 +89,14 @@ class SDialog extends HTMLElement {
       this.#openPosition = null;
       const cycle = this.#cycle;
       if (position) {
-        window.scrollTo({ ...position, behavior: 'instant' });
+        this.#restoreOffset(position);
         // Native close/focus and root unlock can finish layout in the next frame.
         cancelAnimationFrame(this.#restoreFrame);
         this.#restoreFrame = requestAnimationFrame(() => {
           this.#restoreFrame = 0;
-          if (cycle === this.#cycle && !this.#dialog.open) window.scrollTo({ ...position, behavior: 'instant' });
+          if (cycle === this.#cycle && !this.#dialog.open) this.#restoreOffset(position);
         });
+        this.#holdOffset(position, cycle);
       }
     }, opts);
 
@@ -112,6 +121,7 @@ class SDialog extends HTMLElement {
     this.#ac?.abort();
     this.#cycle++;
     cancelAnimationFrame(this.#restoreFrame);
+    this.#settle?.abort();
     this.#closing?.cancel();
     this.#closing = null;
     this.#dialog?.removeAttribute('data-closing');
@@ -142,6 +152,7 @@ class SDialog extends HTMLElement {
       }
       this.#cycle++;
       cancelAnimationFrame(this.#restoreFrame);
+      this.#settle?.abort();
       this.#closePosition = null;
       if (this.#closing) {
         this.#closing.cancel();
@@ -156,7 +167,7 @@ class SDialog extends HTMLElement {
       // Record once per open cycle (a reopen during the exit animation keeps the original offset).
       if (!this.#openPosition) this.#openPosition = { left, top };
       const result = this.#originalShowModal(...args);
-      window.scrollTo({ left, top, behavior: 'instant' });
+      this.#restoreOffset({ left, top });
       return result;
     };
     this.#originalClose = this.#dialog.close.bind(this.#dialog);
@@ -172,16 +183,24 @@ class SDialog extends HTMLElement {
       }
       const style = getComputedStyle(this.#dialog);
       const closed = style.getPropertyValue('--panel-closed-transform').trim() || 'none';
-      // The panel starts moving on the first frame (no dead time after the tap), glides out and lands softly; it only
-      // fades over the last third, when it is mostly off screen, so it is seen leaving rather than vanishing mid-way.
-      // Keep duration/easing in step with the backdrop rule "Panel exit" in snippets/theme-styles.liquid.
+      // A field left focused keeps the phone keyboard up until the panel has gone, and the browser then moves the
+      // page while the keyboard folds away, after the offset was restored. Let it fold away during the exit instead.
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && focused !== this.#dialog && this.#dialog.contains(focused)
+        && focused.matches('input, textarea, select, [contenteditable]')) {
+        focused.blur();
+      }
+      // Exit: the panel answers the tap on the first frame but leaves at an unhurried pace, and stays fully opaque
+      // until it is nearly off screen. Measured before this change (480ms, CSS ease): a full-screen sheet covered
+      // 54% of its travel in 150ms and was gone by 300ms, less than half the time it takes to open (750ms).
+      // Keep duration/easing in step with the backdrop rule "Panel exit" in assets/illegant-flagship.css.
       const animation = this.#dialog.animate([
         { opacity: style.opacity, transform: style.transform, offset: 0 },
-        { opacity: style.opacity, offset: 0.65 },
+        { opacity: style.opacity, offset: 0.8 },
         { opacity: 0, transform: closed, offset: 1 }
       ], {
-        duration: 480,
-        easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+        duration: EXIT_MS,
+        easing: EXIT_EASING,
         fill: 'forwards'
       });
       this.#closing = animation;
@@ -205,7 +224,43 @@ class SDialog extends HTMLElement {
   #finishClose(args, position) {
     this.#closePosition = position;
     this.#originalClose(...args);
-    window.scrollTo({ ...position, behavior: 'instant' });
+    this.#restoreOffset(position);
+  }
+
+  /**
+   * Puts the page back on the given offset, only when it has actually moved. A scroll to the offset the page
+   * already rests on is not free: on the homepage (CSS scroll snap on touch screens) it makes the browser
+   * re-evaluate its snap position.
+   */
+  #restoreOffset({ left, top }) {
+    if (Math.abs(window.scrollX - left) < 1 && Math.abs(window.scrollY - top) < 1) return;
+    window.scrollTo({ left, top, behavior: 'instant' });
+  }
+
+  /**
+   * After a panel closes, phones can still move the page for a moment (the keyboard folding away, the browser bars
+   * returning). For a short while, put the page back whenever that happens, and stop at once when the visitor
+   * touches, wheels or types: from then on the page is theirs.
+   */
+  #holdOffset(position, cycle) {
+    this.#settle?.abort();
+    const settle = new AbortController();
+    this.#settle = settle;
+    const { signal } = settle;
+    const stop = () => settle.abort();
+    const put = () => {
+      if (signal.aborted) return;
+      if (cycle !== this.#cycle || this.#dialog.open || document.querySelector('dialog[open]')) { stop(); return; }
+      this.#restoreOffset(position);
+    };
+    for (const type of ['touchstart', 'wheel', 'keydown', 'pointerdown']) {
+      window.addEventListener(type, stop, { passive: true, capture: true, signal });
+    }
+    window.addEventListener('scroll', put, { passive: true, signal });
+    window.visualViewport?.addEventListener('resize', put, { signal });
+    window.visualViewport?.addEventListener('scroll', put, { signal });
+    const timer = setTimeout(stop, SETTLE_MS);
+    signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
   }
 
   #togglePassword(source) {

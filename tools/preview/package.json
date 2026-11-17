@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@shopify/theme-check-node": "^4.0.0",
+    "axe-core": "^4.14.1",
+    "liquidjs": "^10.30.1"
+  }
+}
