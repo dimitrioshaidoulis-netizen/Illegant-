@@ -249,24 +249,21 @@ label[for$="-sort"] { font-size: 0.75rem; letter-spacing: 0.04em; text-transform
   }
 }
 
-/* ---------- 7. Homepage: every section locks into place on touch screens --------------------------------
-   Native scroll snap, so the stop rides on the finger's own momentum (no second, scripted movement after
-   lifting). One swipe can never skip a section (snap-stop: always). Each room is its own stop on phones.
-   "The edit" is taller than the screen: it locks at its top, then scrolls freely through the pieces.
-   Mouse and trackpad keep the scripted one-gesture-per-section lock in assets/s-screen-lock.js. */
-@media (hover: none) and (pointer: coarse) {
-  html:has(s-screen-lock) { scroll-snap-type: y mandatory; }
-  s-screen-lock > .screen:not(.rooms),
-  s-screen-lock > .rooms > .room {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-  }
-  @media (min-width: 48rem) {
-    s-screen-lock > .rooms { scroll-snap-align: start; scroll-snap-stop: always; }
-    s-screen-lock > .rooms > .room { scroll-snap-align: none; }
-  }
-  html:has(s-screen-lock) footer { scroll-snap-align: end; }
-}
+/* ---------- 7. Homepage on touch screens: native, free scrolling (17 November 2026) ----------------------
+   This section used to switch on CSS scroll snap for phones and tablets:
+     html:has(s-screen-lock) { scroll-snap-type: y mandatory }  plus  scroll-snap-align: start and
+     scroll-snap-stop: always  on every homepage screen and each room, and  scroll-snap-align: end  on the footer.
+   "mandatory" means the page may only rest on a section top, and "always" means one swipe can never pass the next
+   one. Measured with real touch input: a 120px swipe followed the finger and was pulled back to where it began;
+   a swipe that stopped half-way through a section was carried on to the next section; a flick stopped exactly on
+   the next section top; eight short swipes in a row moved the page 0px in total.
+   Those rules are removed and nothing replaces them: the page follows the finger, keeps its momentum and rests
+   wherever it stops. Section sizes, photographs and arrival effects are unchanged.
+   The compiled bundle still carries  scroll-snap-align: start  on .home-screen and .rooms; without a
+   scroll-snap-type on the scroller those declarations do nothing. The rule below states the intent explicitly and
+   keeps a later stylesheet from switching snapping back on by accident.
+   Mouse and trackpad are untouched (assets/s-screen-lock.js handles the wheel only). */
+html:has(s-screen-lock) { scroll-snap-type: none; }
 
 /* ---------- 8. Homepage ring: photographs arrive in place (16 November 2026) ----------------------------
    Two things made the photographs move on entering the site. (a) The entrance slid every card up by 8% of its
