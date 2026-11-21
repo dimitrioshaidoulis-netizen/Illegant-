@@ -110,15 +110,6 @@
   /* QA fixes, 3 November 2026. Kept here (not config/styles.css) because Admin API theme edits do not run the
      Canvas/Sidekick compiler; plain CSS only, so no utilities are needed from the compiled stylesheet. */
 
-  /* Panel exit: the backdrop fades in step with the scripted exit in assets/s-dialog.js (480ms, ease). */
-  @layer components {
-    .overlay-panel[open][data-closing]::backdrop,
-    #predictive-search.search-sheet[open][data-closing]::backdrop {
-      transition-duration: 480ms;
-      transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-    }
-  }
-
   /* Phones: form fields at 16px or larger, otherwise iOS Safari zooms the page when a field is focused
      (private access, notify me, contact, password, bag quantities, discount code). The two search lines are already larger. */
   @media (max-width: 47.99rem) {

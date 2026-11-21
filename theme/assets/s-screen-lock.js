@@ -8,8 +8,12 @@
  * next resting point: the start of the next section, or the last screen of a section taller than the viewport.
  * When the wheel goes quiet between sections, the page finishes the move to the next section (or eases back if
  * the turn was tiny). Inside a tall section the page simply rests where the wheel stops. Trackpad inertia belongs
- * to the gesture that caused it, so a hard flick cannot skip sections. Touch scrolls freely and stops at the end of each section (see setupTouch); keyboard and
- * scrollbar stay native. With reduced motion the page moves without easing.
+ * to the gesture that caused it, so a hard flick cannot skip sections. Keyboard and scrollbar stay native. With
+ * reduced motion the page moves without easing.
+ *
+ * Touch screens are not handled here at all: phones and tablets scroll natively and freely, with no snapping and
+ * no scripted stops (17 November 2026). This element returns before adding any listener unless the device has a
+ * mouse or trackpad.
  */
 /** Share of the remaining distance covered per 60fps frame (~600ms to settle across one screen). */
 const EASE = 0.12;
@@ -43,8 +47,8 @@ class ScreenLock extends HTMLElement {
       this.#gesture = null;
       this.#current = this.#target = window.scrollY;
     }, { signal });
-    // Touch screens lock with native CSS scroll snap (assets/illegant-flagship.css, section 7), which follows the
-    // finger's own momentum. The scripted touch detent below is kept for reference but no longer armed.
+    // Touch screens scroll natively and freely: no CSS snapping (assets/illegant-flagship.css, section 7) and no
+    // script. The touch detent further down (#setupTouch) is never called; it is kept only as a record. Do not arm it.
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     this.#current = this.#target = window.scrollY;
     window.addEventListener('wheel', (event) => this.#onWheel(event), { passive: false, signal });
@@ -172,7 +176,7 @@ class ScreenLock extends HTMLElement {
     }
   };
 
-  /* ---- Touch: free scrolling with a stop at the end of each section ---------------------------------------- */
+  /* ---- Touch detent: NOT IN USE. Never called; touch screens scroll natively. Kept as a record only. ------- */
   #touchBase = null;
   #touching = false;
   #held = false;

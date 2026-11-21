@@ -19,8 +19,10 @@
 
 {%- liquid
   assign brand_name = 'ILLEGANT'
-  assign brand_title = 'ILLEGANT — Modern wardrobe essentials'
-  assign brand_description = 'ILLEGANT is a considered wardrobe of modern essentials, understated layers and versatile silhouettes. Less, but better.'
+  # Fallback title and description come from the locale files, so Greek pages are described in Greek.
+  # They are only used when the store has no description of its own (Online Store > Preferences).
+  assign brand_title = 'meta.brand_title' | t
+  assign brand_description = 'meta.brand_description' | t
   assign og_title = page_title | default: brand_title
   if request.page_type == 'index'
     assign og_title = brand_title

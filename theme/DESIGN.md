@@ -199,3 +199,15 @@ Merchant approved the direction ("καταπληκτικό"). Recorded so later 
 - **Product:** square size boxes (no radius), struck-through unavailable sizes, a selected unavailable size is outlined (never filled). "Size guide" row appears when a page `size-guide` is published. Products tagged `coming-soon` say Coming soon / Σύντομα διαθέσιμο, with the Notify me form (customer tags `notify-me`, `interest-<handle>`).
 - **Collections:** duplicate count hidden; room tabs and Grid/Index on one row; phones always show the grid (Index is a pointer pattern); Filter/Sort as words with a hairline.
 - **Dialogs (3 Nov QA):** close restores the scroll offset recorded before opening; exit 480ms ease, fades in its last third; form fields ≥16px on phones (no iOS zoom).
+
+## Homepage order + full-screen phones (17 November 2026)
+- **Order:** opening (3D ring) → Women | Men → The edit → manifesto (the "letters" section, words ink in) → Private access
+  (email). The site footer follows on every page. Merchant's request; sections were moved, not duplicated or redesigned.
+- **Touch scrolling is native and free:** no scroll snap (`scroll-snap-type: none` on the homepage), no scroll lock, no
+  touch listeners. `s-screen-lock.js` handles the mouse wheel only. Do not reintroduce snapping on touch screens: the
+  merchant rejected it ("like a slideshow").
+- **Phones, one screen per section:** a screen is `calc(var(--vh) * 100 - var(--header-h))`. On the homepage on phones
+  `--vh` is `1svh` (small viewport: visible area with the browser toolbars shown), uncapped. Ring, each room, manifesto:
+  exactly one screen. The edit: its opening (photo, title, View all) fills the first screen, photo capped at 1.6 × its
+  width, pieces follow below. Private access: at least one screen, taller only if its content needs it.
+  All in `assets/illegant-flagship.css` §12. Desktop sizes unchanged.

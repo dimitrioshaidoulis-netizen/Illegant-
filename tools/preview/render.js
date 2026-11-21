@@ -198,8 +198,10 @@ async function page(out, template, extra) {
   const tpl = fs.readFileSync(path.join(THEME, 'templates', template + '.liquid'), 'utf8');
   const ctx = { ...globals, template: template.split('.')[0], ...extra };
   ctx.request = { ...ctx.request, page_type: ctx.template };
-  const content = await engine.parseAndRender(fix(tpl), ctx, { globals: ctx });
-  const layout = fs.readFileSync(path.join(THEME, 'layout/theme.liquid'), 'utf8');
+  const content = await engine.parseAndRender(fix(tpl).replace(/\{%-?\s*layout\s+'[^']+'\s*-?%\}/, ''), ctx, { globals: ctx });
+  // A template can pick its layout with {% layout 'name' %} (the password page does).
+  const layoutName = (tpl.match(/\{%-?\s*layout\s+'([^']+)'/) || [])[1] || 'theme';
+  const layout = fs.readFileSync(path.join(THEME, `layout/${layoutName}.liquid`), 'utf8');
   const lctx = { ...ctx, content_for_layout: content, page_title: extra.page_title || 'ILLEGANT' };
   const html = await engine.parseAndRender(fix(layout), lctx, { globals: lctx });
   const shimmed = html.replace('"imports": {', '"imports": {\n    "@shopify/partial-rendering": "/stub/partial-rendering.js",').replace('https://cdn.shopify.com/storefront/standard-events.js', '/stub/standard-events.js');
@@ -219,7 +221,8 @@ async function page(out, template, extra) {
     cart: () => page('cart', 'cart', {}),
     'list-collections': () => page('list-collections', 'list-collections', {}),
     page: () => page('page', 'page', { page: { title: 'About ILLEGANT', content: '<p>Our point of view. Less, but better.</p>', handle: 'about-illegant' } }),
-    404: () => page('404', '404', {})
+    404: () => page('404', '404', {}),
+    password: () => page('password', 'password', {})
   };
   for (const [k, fn] of Object.entries(jobs)) { if (only && !only.includes(k)) continue; try { await fn(); } catch (e) { console.error('FAILED', k, e.message.split('\n')[0]); } }
 })();
