@@ -1,7 +1,7 @@
 # Commerce Sprint 01 (22 November 2026)
 
 Branch `claude/commerce-sprint-01` (from `claude/global-business-discovery-43fi2p` @ `b4259f7`).
-Shopify dev theme: **ILLEGANT — Commerce Sprint 01 (dev, unpublished)** (`191499600252`), duplicated from the live theme.
+Shopify development theme: **ILLEGANT — Development (unpublished)** (`191499600252`; created as "Commerce Sprint 01", renamed 22 Nov), duplicated from the live theme.
 The live theme (**ILLEGANT — Launch pass 16 Nov**, `191313772924`) was verified identical to git before work started
 (every file's MD5; `config/settings_data.json` differs only by a trailing newline) and was **not** edited.
 
@@ -46,7 +46,7 @@ Simulated, not verified on Shopify: Standard Actions (recording mock), partial r
 - The bag drawer's pinned summary takes about half of a phone screen; consider dropping "View shopping bag" on phones.
 
 ## Owner checks (real store, not possible from here)
-1. Preview the dev theme (Online Store → Themes → *Commerce Sprint 01* → Preview) on a phone.
+1. Preview the development theme (Online Store → Themes → *ILLEGANT — Development* → Preview) on a phone.
 2. Make one sample product temporarily **Active with 0 stock** (or use a real product later), open it, pick a sold-out
    size, submit Notify me with your own email. In Customers, check tags `notify-me`, `interest-<handle>`,
    `interest-<handle>-<size>`. Return the product to Draft.
