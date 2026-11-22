@@ -21,6 +21,7 @@ Preview on a phone: `https://wzghvi-w0.myshopify.com/?preview_theme_id=191499600
 | Sign-ups could not be tied to a campaign | Sign-up forms add `src-<utm_source>` (e.g. `src-instagram`) from the current address only; nothing stored in the browser | `assets/s-submit-once.js` |
 | Bag drawer: pinned totals took 315 of 667 px on an iPhone SE-size screen (one piece visible) | Same content, tighter rhythm below 760 px height: 243 px, list area 288 → 360 px. Checkout area clears the home indicator (safe-area) on every iPhone | `assets/illegant-flagship.css` §15 |
 | No electronic withdrawal function (EU Directive 2023/2673, art. 11a CRD, applies from 19 June 2026) | Template `page.withdrawal`: "Withdraw from contract here" entry, then the details form, then a separate **Confirm withdrawal** button (native contact form). Not assigned to any page | `templates/page.withdrawal.liquid` (new) |
+| Product cards: link name was the title only while a visible badge (New / Sold out) sat inside the link | Name = title + badge; the decorative wordmark on photo-less cards is hidden from assistive tech | `templates/collection.liquid`, `snippets/type-card.liquid` |
 | Strings | 4 + 9 new keys, English and Greek; Greek covers every key (290/290) | `locales/en.default.json`, `locales/el.json` |
 
 ## Margin calculator (`tools/commerce/dropship_margin.py`)
@@ -32,9 +33,27 @@ Preview on a phone: `https://wzghvi-w0.myshopify.com/?preview_theme_id=191499600
 - CSV columns unchanged. Tests: `python3 -m unittest tools/commerce/test_dropship_margin.py` (11 tests).
 
 ## Tests
-See the final report for numbers. Local renderer (`tools/preview`, LiquidJS) + Chromium; iPhone 13 emulation and
-375/390/1280 px viewports. **No WebKit/real Safari here.** Shopify Standard Actions are a recording mock; form posts are
-intercepted; partial rendering is a stub. Proven: what the theme renders and sends. Not proven: what Shopify answers.
+Local renderer (`tools/preview`, LiquidJS) + Chromium; iPhone 13 emulation and 375/390/1280 px viewports.
+**No WebKit/real Safari here.** Shopify Standard Actions are a recording mock; form posts are intercepted; partial
+rendering is a stub. Proven: what the theme renders and sends. Not proven: what Shopify answers.
+
+| Suite | Result |
+|---|---|
+| `tests/qa/journey.test.js` (new) | 65/65 |
+| `tests/qa/commerce.test.js` (+ bag +, + +, remove, refused change) | 48/48; the refusal toast comes from Shopify's Standard Actions wrapper, which the mock replaces: **check on the store** |
+| `tests/qa/dialogs.test.js` | 96/96 |
+| `tests/qa/home-layout.test.js` | 230/230 |
+| `tests/qa/home-scroll.test.js` | 44/44 |
+| `tests/qa/password.test.js` | 32/32 |
+| `tools/commerce/test_dropship_margin.py` (new) | 11/11 |
+| Theme Check | 0 code errors (MatchingTranslations only, in ~33 unused locale files: 3417, was 3285 + the new keys) |
+| axe-core | 0 violations on 14 changed/related pages (empty home, empty room, stocked home, product, sold-out, bag, search, FAQ, contact, withdrawal, password, Greek pages). Collection cards: link names now include the visible badge (label-in-name fixed); the phone swipe strip is still not keyboard-scrollable (accepted: its extra photos are hidden duplicates, every photo is on the product page, and a tab stop inside the card link would nest interactive controls). list-collections findings are a renderer artefact (LiquidJS `nil`), not the theme |
+
+**Homepage LCP (local, Chromium, 4× CPU, throttled network; not field data).** The LCP element alternates between the
+"Illegant" wordmark text (~0.92 s) and the ring photograph (~1.4 s). The photograph paints at the same time before and
+after (1.37–1.53 s vs 1.38–1.50 s over 8–15 loads each); only which element is counted varies between runs, so
+medians swing (948 vs 1472 ms in one run, 1424 vs 1448 ms in another). No images, animation or LCP path changed; one
+2 KB deferred module (`s-submit-once.js`) was added. Field p75 (2.511 s from 10 loads) needs more real visits to compare.
 
 ## Store-wide settings (owner decision; not changed)
 | Setting | Today | Proposed | Impact | Admin path |

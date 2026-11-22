@@ -153,7 +153,7 @@
                   endif
                 -%}
                 <div class="group/qa relative">
-                <a href="{{ product.url | escape }}" class="group relative block overflow-hidden bg-surface-secondary" data-cursor="{{ 'cursor.view' | t | escape }}" aria-label="{{ product.title | escape }}">
+                <a href="{{ product.url | escape }}" class="group relative block overflow-hidden bg-surface-secondary" data-cursor="{{ 'cursor.view' | t | escape }}" aria-label="{{ product.title | escape }}{% if card_badge != blank %}, {{ card_badge | escape }}{% endif %}">
                   {%- comment -%}
                     Phones: swipe through up to four photographs inside the card (snap, dots below); the strip sits above the
                     card's stretched link so the swipe reaches it, and a tap still opens the piece through this link.
