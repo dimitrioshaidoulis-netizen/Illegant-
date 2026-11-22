@@ -46,6 +46,7 @@ engine.registerFilter('structured_data', () => '{}');
 engine.registerFilter('payment_button', () => '');
 engine.registerFilter('default_errors', () => 'Error');
 engine.registerFilter('placeholder_svg_tag', () => '<svg></svg>');
+engine.registerFilter('handleize', (v) => String(v ?? '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\u0370-\u03ff]+/g, '-').replace(/^-+|-+$/g, ''));
 
 // ---------- tags ----------
 const IGNORE_BODY = ['doc', 'schema'];
@@ -151,6 +152,34 @@ function mkProduct(i, title, price, type, handle, opts = {}) {
       values: variants.map((v) => new OptionValue(v.option1, v, v === (variants.find((x) => x.available) || variants[0]))) }]
   };
 }
+// Two options (Colour x Size) as Shopify models them: each option value points at the variant that combines it with the
+// currently selected value of the other option; that variant may be sold out, or missing entirely (Ecru / XL).
+function mkTwoOption(i, title, handle, price, { soldOut = [], missing = [], selected = null, tags = [] } = {}) {
+  const colours = ['Black', 'Ecru'];
+  const sizes = ['S', 'M', 'L', 'XL'];
+  const variants = [];
+  let k = 0;
+  for (const c of colours) for (const z of sizes) {
+    if (missing.includes(`${c}/${z}`)) continue;
+    variants.push({ id: 9000 + 100 * i + k++, title: `${c} / ${z}`, option1: c, option2: z, options: [c, z], price: price * 100, compare_at_price: null,
+      available: !soldOut.includes(`${c}/${z}`), sku: `ILG-${i}-${c[0]}${z}`, quantity_rule: { min: 1 } });
+  }
+  const current = variants.find((v) => v.title === selected) || variants.find((v) => v.available) || variants[0];
+  const find = (c, z) => variants.find((v) => v.option1 === c && v.option2 === z) || null;
+  const imgs = [img(`product-${(i % 6) + 1}a.jpg`, 1500, 2000, title), img(`product-${(i % 6) + 1}b.jpg`, 1500, 2000, title)];
+  const ov = (name, variant, sel) => { const o = new OptionValue(name, variant || { id: '', available: false }, sel); if (!variant) o.variant = null; return o; };
+  return {
+    id: i, title, handle, url: `/products/${handle}`, type: 'Knitwear', vendor: 'ILLEGANT', tags, available: variants.some((v) => v.available),
+    price: price * 100, price_min: price * 100, price_max: price * 100, created_at: new Date().toISOString(),
+    description: '<p>Description placeholder for the local preview.</p>', featured_image: imgs[0], images: imgs,
+    media: imgs.map((m, n) => ({ ...m, id: 50 * i + n, media_type: 'image', preview_image: m })), featured_media: { preview_image: imgs[0] },
+    variants, selected_or_first_available_variant: current, has_only_default_variant: false, options: ['Colour', 'Size'], collections: [],
+    options_with_values: [
+      { name: 'Colour', position: 1, selected_value: current.option1, values: colours.map((c) => ov(c, find(c, current.option2) || variants.find((v) => v.option1 === c), c === current.option1)) },
+      { name: 'Size', position: 2, selected_value: current.option2, values: sizes.map((z) => ov(z, find(current.option1, z), z === current.option2)) }
+    ]
+  };
+}
 const products = [
   mkProduct(1, 'The Essential Tee — Chalk', 39, 'T-Shirt', 'the-essential-tee-chalk'),
   mkProduct(2, 'The Tailored Trouser — Mink', 89, 'Trousers', 'the-tailored-trouser-mink'),
@@ -162,6 +191,12 @@ const products = [
   mkProduct(8, 'Midi Dress', 119, 'Dresses', 'midi-dress', { unavailable: true, tags: ['coming-soon'] })
 ];
 function mkCollection(handle, title, prods) { return { id: handle.length, handle, title, url: `/collections/${handle}`, products: prods, products_count: prods.length, all_products_count: prods.length, description: '', image: null, filters: [], sort_options: [], sort_by: '', default_sort_by: '' }; }
+const knitOpts = { soldOut: ['Black/S', 'Black/L', 'Ecru/M'], missing: ['Ecru/XL'] };
+products.push(mkTwoOption(9, 'Two-tone Knit', 'two-tone-knit', 129, knitOpts));
+const sale = mkProduct(10, 'Wool Scarf', 59, 'Accessories', 'wool-scarf');
+for (const v of sale.variants) v.compare_at_price = 79 * 100;
+sale.has_only_default_variant = true;
+products.push(sale);
 const EMPTY = process.env.EMPTY_STORE === '1';
 const P = EMPTY ? [] : products;
 const collections = {
@@ -180,13 +215,22 @@ const fontObj = (family) => ({ family, fallback_families: 'sans-serif', weight: 
 const globals = {
   settings: { ...settings, type_primary_font: fontObj('Inter'), type_heading_font: fontObj('Inter') },
   shop: { name: 'ILLEGANT', url: 'http://localhost', description: '', customer_accounts_enabled: true, privacy_policy: { url: '/policies/privacy-policy', title: 'Privacy policy' }, brand: {}, enabled_locales: [{ iso_code: 'en', primary: true }, { iso_code: 'el' }], published_locales: [], currency: 'EUR', money_format: '€{{amount}}' },
-  request: { locale: { iso_code: LOCALE, direction: 'ltr', primary: LOCALE === 'en' }, design_mode: false, origin: 'http://localhost', path: '/', host: 'localhost', page_type: '' },
+  request: { locale: { iso_code: LOCALE, direction: 'ltr', primary: LOCALE === 'en' }, design_mode: process.env.DESIGN_MODE === '1', origin: 'http://localhost', path: '/', host: 'localhost', page_type: '' },
   routes, collections, linklists, images, all_products: Object.fromEntries(products.map((p) => [p.handle, p])),
-  pages: { faq: { url: '/pages/faq', title: 'FAQ' }, 'size-guide': process.env.SIZE_GUIDE === '1' ? { url: '/pages/size-guide', title: 'Size guide' } : null }, cart: { item_count: 0, items: [], total_price: 0, items_subtotal_price: 0, note: '', cart_level_discount_applications: [], requires_shipping: true },
+  pages: { faq: { url: '/pages/faq', title: 'FAQ' }, 'size-guide': process.env.SIZE_GUIDE === '1' ? { url: '/pages/size-guide', title: 'Size guide' } : null }, cart: process.env.CART === '1' ? mkCart() : { item_count: 0, items: [], total_price: 0, items_subtotal_price: 0, note: '', cart_level_discount_applications: [], requires_shipping: true },
   localization: { available_languages: [], available_countries: [], language: { iso_code: 'en' }, country: { iso_code: 'GR' } },
   customer: null, content_for_header: '', canonical_url: 'http://localhost/', current_page: 1, page_description: '', powered_by_link: ''
 };
 
+function mkCart() {
+  const lines = [[products[1], products[1].variants[1], 2], [products[8], products[8].variants[1], 1]].map(([p, v, q], n) => ({
+    key: `${v.id}:k${n}`, id: v.id, variant_id: v.id, variant: v, product: p, quantity: q, url: `${p.url}?variant=${v.id}`, image: p.featured_image, title: `${p.title} - ${v.title}`,
+    original_price: v.price, final_price: v.price, line_price: v.price * q, final_line_price: v.price * q, line_level_discount_allocations: [],
+    options_with_values: (p.options || ['Size']).map((name, j) => ({ name, value: (v.options || [v.option1])[j] }))
+  }));
+  const total = lines.reduce((t, l) => t + l.line_price, 0);
+  return { item_count: lines.reduce((t, l) => t + l.quantity, 0), items: lines, total_price: total, items_subtotal_price: total, note: '', cart_level_discount_applications: [], requires_shipping: true, currency: { iso_code: 'EUR' } };
+}
 // The Liquid `form.posted_successfully?` property name is not valid in LiquidJS: rewrite it for the preview only.
 const fix = (s) => s.replace(/posted_successfully\?/g, 'posted_successfully');
 const origParse = engine.parse.bind(engine);
@@ -222,6 +266,10 @@ async function page(out, template, extra) {
     'list-collections': () => page('list-collections', 'list-collections', {}),
     page: () => page('page', 'page', { page: { title: 'About ILLEGANT', content: '<p>Our point of view. Less, but better.</p>', handle: 'about-illegant' } }),
     404: () => page('404', '404', {}),
+    'product-knit': () => page('product-knit', 'product', { product: products[8], page_title: products[8].title }),
+    'product-knit-soldout': () => page('product-knit-soldout', 'product', { product: mkTwoOption(9, 'Two-tone Knit', 'two-tone-knit', 129, { ...knitOpts, selected: 'Black / L' }), page_title: 'Two-tone Knit' }),
+    'product-knit-ecru': () => page('product-knit-ecru', 'product', { product: mkTwoOption(9, 'Two-tone Knit', 'two-tone-knit', 129, { ...knitOpts, selected: 'Ecru / S' }), page_title: 'Two-tone Knit' }),
+    'product-sale': () => page('product-sale', 'product', { product: products[9], page_title: products[9].title }),
     password: () => page('password', 'password', {})
   };
   for (const [k, fn] of Object.entries(jobs)) { if (only && !only.includes(k)) continue; try { await fn(); } catch (e) { console.error('FAILED', k, e.message.split('\n')[0]); } }
