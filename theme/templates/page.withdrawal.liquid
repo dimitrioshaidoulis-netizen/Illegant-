@@ -1,0 +1,66 @@
+{%- comment -%}
+  Withdrawal page (assign this template to the "Υπαναχώρηση" page in Admin → Online Store → Pages → Theme template).
+  The EU online withdrawal function (Consumer Rights Directive art. 11a, added by Directive (EU) 2023/2673, applies from
+  19 June 2026): a clearly labelled "withdraw from contract here" entry, then the details, then a separate
+  "confirm withdrawal" step. It is Shopify's native contact form (no app): the request reaches the store's email.
+  The consumer's acknowledgement on a durable medium (an email) is NOT sent by this form: the owner sends it, or sets up
+  an automation, before sales open. The page text (terms, return address, 14 days) comes from the page itself in Admin.
+{%- endcomment -%}
+{% block 'container', class: 'w-full max-w-page mx-auto px-margin' %}
+  <div class="grid grid-cols-1 gap-12 py-12 md:grid-cols-5">
+    <div class="md:col-span-2">
+      {% block 'text', tag: 'h1', variant: 'type-display', class: 'mb-6 font-bold text-[clamp(1.25rem,1.6vw,1.75rem)] break-words leading-[1.15] tracking-[-0.01em]' %}{{ page.title | escape }}{% endblock %}
+      {%- if page.content != blank -%}
+        <div class="richtext text-on-surface-secondary">{{ page.content | replace: '<h1', '<h2' | replace: '</h1>', '</h2>' }}</div>
+      {%- endif -%}
+      {%- comment -%} Step 1: the labelled entry point, kept above the fold. {%- endcomment -%}
+      <a href="#withdrawal-form" class="mt-8 inline-flex items-center gap-2 border-b border-on-surface pb-1.5 type-overline tracking-[0.04em] no-underline text-on-surface hover:opacity-70">{{ 'withdrawal.cta' | t }} &rarr;</a>
+    </div>
+
+    <div class="md:col-span-3">
+      <s-submit-once class="block" data-busy-label="{{ 'general.sending' | t | escape }}">
+      {% form 'contact', id: 'withdrawal-form' %}
+        <input type="hidden" name="contact[{{ 'withdrawal.request_field' | t }}]" value="{{ 'withdrawal.request_value' | t }}">
+        {%- if form.posted_successfully? -%}
+          <div role="status" tabindex="-1" class="mb-6 border-s-4 border-s-success bg-success/10 p-4 text-on-surface">
+            <p class="type-body">{{ 'withdrawal.success' | t }}</p>
+          </div>
+        {%- else -%}
+          {% block 'text', tag: 'h2', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface' %}{{ 'withdrawal.heading' | t }}{% endblock %}
+          {% block 'text', variant: 'type-body-sm', class: 'mt-2 mb-6 text-on-surface-secondary max-w-[46ch]' %}{{ 'withdrawal.intro' | t }}{% endblock %}
+          {%- if form.errors -%}
+            <div role="alert" class="mb-6 border-s-4 border-s-critical bg-critical/10 p-4 text-on-surface">
+              <p class="type-body font-medium mb-1">{{ 'forms.form_errors_title' | t }}</p>
+              <p class="text-sm">{{ form.errors | default_errors }}</p>
+            </div>
+          {%- endif -%}
+          <div class="flex flex-col gap-4">
+            <div class="space-y-1.5">
+              <label for="withdrawal-name" class="block text-sm font-medium text-on-surface">{{- 'contact.name' | t -}}<span class="text-critical ms-0.5" aria-hidden="true">*</span><span class="sr-only"> ({{ 'forms.required' | t }})</span></label>
+              <input type="text" id="withdrawal-name" name="contact[name]" class="border-on-surface" value="{{ form.name | default: customer.name | escape }}" autocomplete="name" required aria-required="true">
+            </div>
+            <div class="space-y-1.5">
+              <label for="withdrawal-email" class="block text-sm font-medium text-on-surface">{{- 'contact.email' | t -}}<span class="text-critical ms-0.5" aria-hidden="true">*</span><span class="sr-only"> ({{ 'forms.required' | t }})</span></label>
+              <input type="email" id="withdrawal-email" name="contact[email]" class="border-on-surface" value="{{ form.email | default: customer.email | escape }}" autocomplete="email" autocorrect="off" autocapitalize="off" required aria-required="true">
+            </div>
+            <div class="space-y-1.5">
+              <label for="withdrawal-order" class="block text-sm font-medium text-on-surface">{{- 'withdrawal.order_number' | t -}}<span class="text-critical ms-0.5" aria-hidden="true">*</span><span class="sr-only"> ({{ 'forms.required' | t }})</span></label>
+              <input type="text" id="withdrawal-order" name="contact[{{ 'withdrawal.order_number' | t }}]" class="border-on-surface" required aria-required="true" autocomplete="off">
+            </div>
+            <div class="space-y-1.5">
+              <label for="withdrawal-items" class="block text-sm font-medium text-on-surface">{{ 'withdrawal.items' | t }}</label>
+              <textarea id="withdrawal-items" name="contact[body]" class="border-on-surface" rows="4" aria-describedby="withdrawal-items-hint"></textarea>
+              <p id="withdrawal-items-hint" class="text-xs text-on-surface-secondary">{{ 'withdrawal.items_hint' | t }}</p>
+            </div>
+            <div>
+              {%- comment -%} Step 2: the separate confirmation the directive asks for. {%- endcomment -%}
+              {% block 'button', type: 'submit', class: 'h-11 px-4 text-sm rounded-button' %}{{- 'withdrawal.confirm' | t -}}{% endblock %}
+            </div>
+          </div>
+        {%- endif -%}
+      {% endform %}
+      </s-submit-once>
+    </div>
+  </div>
+<script type="module" src="{{ 's-submit-once.js' | asset_url }}"></script>
+{% endblock %}

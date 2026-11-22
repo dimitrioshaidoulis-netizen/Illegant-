@@ -267,6 +267,7 @@
         {%- endcomment -%}
         {%- unless current_variant.available -%}
           {%- assign notify_form_id = 'notify-form-' | append: product.id -%}
+          <s-submit-once class="block" data-busy-label="{{ 'general.sending' | t | escape }}">
           {%- form 'customer', id: notify_form_id, class: 'mt-6 pt-6 border-t border-border' -%}
             {%- comment -%} Tags count interest per piece and, for pieces with sizes or colours, per variant (interest-<handle>-<variant>). {%- endcomment -%}
             <input type="hidden" name="contact[tags]" value="notify-me, interest-{{ product.handle }}{% unless product.has_only_default_variant %}, interest-{{ product.handle }}-{{ current_variant.title | handleize }}{% endunless %}">
@@ -291,6 +292,7 @@
               </p>
             {%- endif -%}
           {%- endform -%}
+          </s-submit-once>
         {%- endunless -%}
 
         {% endpartial %}
@@ -402,4 +404,5 @@
 
   <script type="module" src="{{ 's-variant-picker.js' | asset_url }}"></script>
   <script type="module" src="{{ 's-product-form.js' | asset_url }}"></script>
+  <script type="module" src="{{ 's-submit-once.js' | asset_url }}"></script>
 {% endblock %}

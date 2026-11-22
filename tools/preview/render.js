@@ -205,7 +205,13 @@ const collections = {
   'women-s-tops': mkCollection('women-s-tops', 'Women’s Tops', P.slice(6, 8)), 'men-s-knitwear': mkCollection('men-s-knitwear', 'Men’s Knitwear', P.slice(2, 4))
 };
 for (const p of products) p.collections = [collections.women];
-const link = (title, url, links = []) => ({ title, url, handle: title.toLowerCase().replace(/[^a-z]+/g, '-'), links, active: false, current: false, object: null });
+// Links carry Shopify's link.type and link.object, so templates can hide links to empty rooms like the real store.
+const linkType = (url) => (url.startsWith('/collections/') ? 'collection_link' : url.startsWith('/pages/') ? 'page_link' : url === '/search' ? 'search_link' : 'http_link');
+const link = (title, url, links = []) => {
+  const type = linkType(url);
+  const h = type === 'collection_link' ? url.split('/')[2] : null;
+  return { title, url, type, handle: title.toLowerCase().replace(/[^a-z]+/g, '-'), links, active: false, current: false, object: h ? (collections[h] || mkCollection(h, title, [])) : null };
+};
 const linklists = {
   'main-menu': { links: [link('New Arrivals', '/collections/new-arrivals'), link('Men', '/collections/men', [link('All menswear', '/collections/men'), link('T-shirts', '/collections/men-s-t-shirts'), link('Knitwear', '/collections/men-s-knitwear'), link('Trousers', '/collections/men-s-trousers')]), link('Women', '/collections/women', [link('All womenswear', '/collections/women'), link('Tops', '/collections/women-s-tops'), link('Knitwear', '/collections/women-s-knitwear'), link('Trousers', '/collections/women-s-trousers')])] },
   footer: { links: [link('About ILLEGANT', '/pages/about-illegant'), link('FAQ', '/pages/faq'), link('Contact', '/pages/contact'), link('Search', '/search')] }
@@ -265,6 +271,10 @@ async function page(out, template, extra) {
     cart: () => page('cart', 'cart', {}),
     'list-collections': () => page('list-collections', 'list-collections', {}),
     page: () => page('page', 'page', { page: { title: 'About ILLEGANT', content: '<p>Our point of view. Less, but better.</p>', handle: 'about-illegant' } }),
+    // Content as the store holds it today: the page text opens with its own h1 (the template must demote it).
+    'page-faq': () => page('page-faq', 'page', { page: { title: 'FAQ', content: '<h1>Frequently asked questions</h1><h2>Shipping</h2><p>Orders are not open yet.</p>', handle: 'faq' }, page_title: 'FAQ' }),
+    withdrawal: () => page('withdrawal', 'page.withdrawal', { page: { title: 'Υπαναχώρηση', content: '<p>Withdrawal terms are set in Admin.</p>', handle: 'ypanachorisi' }, page_title: 'Withdrawal' }),
+    contact: () => page('contact', 'page.contact', { page: { title: 'Contact', content: '<h1>We’d love to hear from you.</h1><p>Write to us below.</p>', handle: 'contact' }, page_title: 'Contact' }),
     404: () => page('404', '404', {}),
     'product-knit': () => page('product-knit', 'product', { product: products[8], page_title: products[8].title }),
     'product-knit-soldout': () => page('product-knit-soldout', 'product', { product: mkTwoOption(9, 'Two-tone Knit', 'two-tone-knit', 129, { ...knitOpts, selected: 'Black / L' }), page_title: 'Two-tone Knit' }),

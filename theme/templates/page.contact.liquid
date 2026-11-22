@@ -10,12 +10,14 @@
     <div class="md:col-span-2">
       {% block 'text', tag: 'h1', variant: 'type-display', class: 'mb-6 font-bold text-[clamp(1.25rem,1.6vw,1.75rem)] break-words leading-[1.15] tracking-[-0.01em]' %}{{ page.title | escape }}{% endblock %}
 
+      {%- comment -%} The page title is the one h1; a heading written as h1 in the page's own text is set as h2 (nothing is removed). {%- endcomment -%}
       {%- if page.content != blank -%}
-        <div class="richtext text-on-surface-secondary">{{ page.content }}</div>
+        <div class="richtext text-on-surface-secondary">{{ page.content | replace: '<h1', '<h2' | replace: '</h1>', '</h2>' }}</div>
       {%- endif -%}
     </div>
 
     <div class="md:col-span-3">
+      <s-submit-once class="block" data-busy-label="{{ 'general.sending' | t | escape }}">
       {% form 'contact' %}
         {%- if form.posted_successfully? -%}
           <div role="status" tabindex="-1" autofocus class="mb-6 border-s-4 border-s-success bg-success/10 p-4 text-on-surface">
@@ -133,6 +135,8 @@
           </div>
         </div>
       {% endform %}
+      </s-submit-once>
     </div>
   </div>
+<script type="module" src="{{ 's-submit-once.js' | asset_url }}"></script>
 {% endblock %}

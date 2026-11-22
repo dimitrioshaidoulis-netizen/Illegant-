@@ -39,7 +39,8 @@
     "meta": {
       "tagged": "tagged \"{{ tags }}\"",
       "page": "Page {{ number }}"
-    }
+    },
+    "sending": "Sending…"
   },
   "accessibility": {
     "results_updated": "Results updated",
@@ -63,7 +64,10 @@
   },
   "cart": {
     "ledger_label": "Your selection",
-    "pieces_count": { "one": "1 piece", "other": "{{ count }} pieces" },
+    "pieces_count": {
+      "one": "1 piece",
+      "other": "{{ count }} pieces"
+    },
     "ticket_label": "Your ticket",
     "empty_wall": "Space reserved",
     "checkout": "Checkout",
@@ -117,7 +121,10 @@
   },
   "collections": {
     "room_label": "Exhibition room",
-    "pieces_count": { "one": "1 piece", "other": "{{ count }} pieces" },
+    "pieces_count": {
+      "one": "1 piece",
+      "other": "{{ count }} pieces"
+    },
     "view_label": "Hang",
     "view_wall": "Grid",
     "view_index": "Index",
@@ -151,7 +158,8 @@
       "label": "ILLEGANT / FIRST EDIT",
       "heading": "The first edit is taking shape.",
       "body": "We’re confirming product details, sizing and availability. Pieces will appear here before orders open.",
-      "faq": "Read the FAQ"
+      "faq": "Read the FAQ",
+      "notify": "Leave your email and we will tell you first when these pieces arrive."
     }
   },
   "header": {
@@ -324,7 +332,8 @@
     "close": "Close",
     "new_in": "New in",
     "view_all": "View all",
-    "athens": "Athens"
+    "athens": "Athens",
+    "help": "House"
   },
   "home": {
     "manifesto": "Quiet in cut. Certain in presence. Made for Greece and Europe, worn without asking anyone.",
@@ -336,7 +345,8 @@
       "title": "New arrivals",
       "subtitle": "Explore the collection",
       "heading": "Elegance, without permission.",
-      "cta": "Discover the collection"
+      "cta": "Discover the collection",
+      "cta_early": "Request early access"
     },
     "women": {
       "title": "Women",
@@ -370,5 +380,17 @@
   "meta": {
     "brand_title": "ILLEGANT — Modern wardrobe essentials",
     "brand_description": "ILLEGANT is a considered wardrobe of modern essentials, understated layers and versatile silhouettes. Less, but better."
+  },
+  "withdrawal": {
+    "cta": "Withdraw from contract here",
+    "heading": "Withdraw from your purchase",
+    "intro": "Fill in your details and press \"Confirm withdrawal\". We will confirm receipt by email.",
+    "order_number": "Order number",
+    "items": "Pieces you are withdrawing from",
+    "items_hint": "Leave empty to withdraw from the whole order.",
+    "confirm": "Confirm withdrawal",
+    "success": "We have received your withdrawal. We will confirm it by email.",
+    "request_field": "Request",
+    "request_value": "Withdrawal from contract"
   }
 }

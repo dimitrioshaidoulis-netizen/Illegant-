@@ -35,9 +35,18 @@
                   <span class="site-menu__rise block font-heading font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,1.6vw,1.75rem)]">{{ link.title | escape }}</span>
                 </span>
               </a>
-              {%- if link.links.size > 0 -%}
+              {%- liquid
+                assign visible_subs = 0
+                for sub in link.links
+                  if sub.type != 'collection_link' or sub.object.all_products_count > 0
+                    assign visible_subs = visible_subs | plus: 1
+                  endif
+                endfor
+              -%}
+              {%- if visible_subs > 0 -%}
                 <ul role="list" class="site-menu__sub m-0 mt-2 ps-9 md:ps-14 p-0 list-none flex flex-wrap gap-x-6 gap-y-2">
                   {%- for sub in link.links -%}
+                    {%- if sub.type == 'collection_link' and sub.object.all_products_count == 0 -%}{%- continue -%}{%- endif -%}
                     <li class="m-0"><a href="{{ sub.url }}" class="type-overline tracking-[0.03em] no-underline text-on-surface-secondary hover:text-on-surface border-b border-transparent hover:border-on-surface pb-0.5">{{ sub.title | escape }}</a></li>
                   {%- endfor -%}
                 </ul>
@@ -68,7 +77,7 @@
             <span class="pointer-events-none absolute inset-0 bg-linear-to-t from-on-surface/60 to-transparent to-50%"></span>
             <span class="absolute inset-x-0 bottom-0 flex items-baseline justify-between gap-4 p-5">
               <span class="type-overline tracking-[0.04em]">{{ link.title | escape }}</span>
-              {%- if link.type == 'collection_link' -%}
+              {%- if link.type == 'collection_link' and link.object.products_count > 0 -%}
                 <span class="type-overline tracking-[0.04em] opacity-80">{{ 'home.pieces' | t: count: link.object.products_count }}</span>
               {%- endif -%}
             </span>
@@ -121,8 +130,22 @@
           <li class="m-0"><button type="button" commandfor="account-panel" command="show-modal" data-menu-handoff class="inline-flex items-center min-h-touch-target cursor-pointer type-overline tracking-[0.04em] text-on-surface hover:opacity-70">{{ 'general.account' | t }}</button></li>
         {%- endif -%}
         <li class="m-0"><button type="button" commandfor="cart-drawer" command="show-modal" data-menu-handoff class="inline-flex items-center min-h-touch-target cursor-pointer type-overline tracking-[0.04em] text-on-surface hover:opacity-70">{{ 'cart.title' | t }} ({{ cart.item_count }})</button></li>
-        <li class="m-0"><a href="{{ routes.root_url }}#private-access-form" class="inline-flex items-center min-h-touch-target type-overline tracking-[0.04em] no-underline text-accent hover:opacity-70">{{ 'home.access.label' | t }}</a></li>
+        <li class="m-0"><a href="{{ routes.root_url }}#private-access" class="inline-flex items-center min-h-touch-target type-overline tracking-[0.04em] no-underline text-accent hover:opacity-70">{{ 'home.access.label' | t }}</a></li>
       </ul>
+      {%- comment -%}
+        House pages (the footer menu: About, FAQ, Contact), so phones reach them from the menu without scrolling to the
+        footer. Search is left out here: it already has its own button above.
+      {%- endcomment -%}
+      {%- if linklists['footer'].links.size > 0 -%}
+        <nav class="w-full" aria-label="{{ 'site_menu.help' | t | escape }}">
+          <ul role="list" class="m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-1">
+            {%- for link in linklists['footer'].links -%}
+              {%- if link.type == 'search_link' -%}{%- continue -%}{%- endif -%}
+              <li class="m-0"><a href="{{ link.url }}" class="inline-flex items-center min-h-touch-target type-overline tracking-[0.04em] no-underline text-on-surface-secondary hover:text-on-surface"{% if link.active %} aria-current="page"{% endif %}>{{ link.title | escape }}</a></li>
+            {%- endfor -%}
+          </ul>
+        </nav>
+      {%- endif -%}
       {%- if localization_submit != blank -%}
         {% render 'localization-form', show_country: true, id: 'menu-localization', class: 'md:hidden', submit_button: localization_submit %}
       {%- endif -%}

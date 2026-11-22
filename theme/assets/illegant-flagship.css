@@ -527,3 +527,30 @@ html:has([data-password-page]) { scrollbar-gutter: auto; background: var(--color
     margin-block: -0.375rem;
   }
 }
+
+/* 14. Early-interest sign-up in an empty room (snippets/interest-form.liquid): the private-access line, set dark on light.
+   A hairline under the field darkens on focus; the busy state (s-submit-once) dims the button while the form posts. */
+.interest-room { max-width: 30rem; }
+.interest__row { border-bottom: 1px solid color-mix(in oklab, var(--color-on-surface) 45%, transparent); }
+.interest__row:focus-within { border-bottom-color: var(--color-on-surface); }
+.interest__input:focus { outline: none; }
+.interest__input:focus-visible { outline: none; }
+.interest__submit:focus-visible { outline: 2px solid var(--color-on-surface); outline-offset: 2px; }
+s-submit-once [aria-busy="true"] { opacity: 0.55; cursor: progress; }
+
+/* 15. Bag drawer on short phones (iPhone SE/mini height): the pinned totals took almost half the screen (315 of 667px),
+   leaving room for about one piece. Same content and order, tighter rhythm: 44px buttons (still the touch target),
+   smaller gaps and padding. Taller phones and desktop keep the full rhythm. */
+@media (max-width: 47.99rem) and (max-height: 760px) {
+  #cart-drawer .shrink-0.border-t:has(> #cart-drawer-summary) { padding-top: 0.625rem; }
+  #cart-drawer-summary form { gap: 0.5rem; }
+  #cart-drawer-summary dl { row-gap: 0.25rem; }
+  #cart-drawer-summary dl > :is(dt, dd):nth-last-child(-n + 2) { margin-top: 0.25rem; padding-top: 0.5rem; }
+  #cart-drawer-summary :is(button, a).h-13 { height: 2.75rem; min-height: 2.75rem; margin-top: 0; }
+  #cart-drawer-summary details > summary { padding-block: 0.5rem; }
+}
+/* Checkout stays clear of the iPhone home indicator in every height. */
+#cart-drawer .shrink-0.border-t:has(> #cart-drawer-summary) { padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 47.99rem) and (max-height: 760px) {
+  #cart-drawer .shrink-0.border-t:has(> #cart-drawer-summary) { padding-bottom: max(0.625rem, env(safe-area-inset-bottom, 0px)); }
+}

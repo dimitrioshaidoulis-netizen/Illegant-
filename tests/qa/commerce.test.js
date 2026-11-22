@@ -174,6 +174,45 @@ const mockActions = (mode) => `
     check(`bag drawer (${name}): no script errors`, errors.length === 0, errors.slice(0, 2).join(' | '));
     await context.close();
   }
+  // 6b. Bag drawer controls (phone): +, two fast + taps, remove, and a refused change. Standard Actions are mocked, so
+  // this proves what the theme sends; Shopify's real answer (stock limits, totals) is checked on the store.
+  for (const mode of ['ok', 'error']) {
+    const { context, page, errors } = await open(phone, 'collection-cart', mode);
+    await page.evaluate(() => document.getElementById('cart-drawer').showModal());
+    await page.waitForTimeout(1000);
+    const first = await page.evaluate(() => {
+      const plus = document.querySelector('#cart-drawer button[command="--update-quantity"]:not([data-delta^="-"])');
+      return { key: plus.dataset.lineKey, qty: Number(document.querySelector(`#cart-drawer [data-quantity-display][data-line-key="${plus.dataset.lineKey}"]`).value) };
+    });
+    const tapPlus = () => page.evaluate((key) => document.querySelector(`#cart-drawer button[command="--update-quantity"][data-line-key="${key}"]:not([data-delta^="-"])`).click(), first.key);
+    await tapPlus();
+    await page.waitForTimeout(700);
+    const afterOne = await page.evaluate(() => window.__calls.slice());
+    if (mode === 'ok') {
+      check('bag + (phone): one updateCart for that line with quantity +1', afterOne.length === 1 && afterOne[0].lines[0].id === first.key && afterOne[0].lines[0].quantity === first.qty + 1, JSON.stringify(afterOne));
+      await page.evaluate(() => { window.__calls.length = 0; });
+      await tapPlus(); await tapPlus();
+      await page.waitForTimeout(800);
+      const twice = await page.evaluate(() => window.__calls.slice());
+      check('bag + + (phone): two fast taps send one change with the final quantity', twice.length === 1 && twice[0].lines[0].quantity >= first.qty + 2, JSON.stringify(twice));
+      await page.evaluate(() => { window.__calls.length = 0; });
+      await page.evaluate((key) => document.querySelector(`#cart-drawer button[command="--remove"][data-line-key="${key}"]`).click(), first.key);
+      await page.waitForTimeout(600);
+      const removed = await page.evaluate(() => window.__calls.slice());
+      check('bag remove (phone): sets that line to quantity 0', removed.length === 1 && removed[0].lines[0].id === first.key && removed[0].lines[0].quantity === 0, JSON.stringify(removed));
+    } else {
+      const shown = await page.evaluate((key) => ({
+        qty: Number(document.querySelector(`#cart-drawer [data-quantity-display][data-line-key="${key}"]`)?.value),
+        alert: [...document.querySelectorAll('[role=alert], #sr-announcer, s-notification')].map((n) => n.textContent.trim()).join(' | ')
+      }), first.key);
+      check('bag + refused (phone): quantity goes back to what the bag holds', shown.qty === first.qty, JSON.stringify(shown));
+      // The refusal message is announced by the Standard Actions override (standard-actions-override.js, wired through
+      // Shopify's configure hook), which this mock replaces: it can only be seen on the real store.
+      console.log('note bag + refused: message toast not testable with the mock; check on the store (pending)');
+    }
+    check(`bag controls (${mode}): no script errors`, errors.length === 0, errors.slice(0, 2).join(' | '));
+    await context.close();
+  }
   {
     const { context, page } = await open(phone, 'cart-cart');
     const c = await page.evaluate(() => ({ checkout: !!document.querySelector('main form button[name="checkout"]'), lines: document.querySelectorAll('main [data-line-key]').length > 0, overflowX: document.documentElement.scrollWidth - innerWidth,

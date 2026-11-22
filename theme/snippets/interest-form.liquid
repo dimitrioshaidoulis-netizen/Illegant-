@@ -1,0 +1,44 @@
+{% doc %}
+  Early-interest sign-up on a light ground (an empty room, before its pieces are published). A native customer form
+  subscribes the email to marketing with the tags below, so no app is needed; Shopify keeps one customer per email,
+  so a repeated sign-up never counts twice. <s-submit-once> blocks double submits and shows a busy state.
+
+  @param {string} form_id - Unique id for the form element. @required
+  @param {string} tags - Comma-separated customer tags, e.g. 'newsletter, private-access, interest-women'. @required
+  @param {string} [described_by] - Id of the visible line that explains the sign-up (aria-describedby on the email field).
+{% enddoc %}
+<s-submit-once class="interest block w-full text-start" data-busy-label="{{ 'general.sending' | t | escape }}">
+  {%- form 'customer', id: form_id, class: 'w-full' -%}
+    <input type="hidden" name="contact[tags]" value="{{ tags | escape }}" data-campaign-tag>
+    {%- if form.posted_successfully? -%}
+      <p class="type-body text-on-surface" role="status">{{ 'home.access.success' | t }}</p>
+    {%- else -%}
+      <div class="interest__row flex items-end gap-0">
+        <label class="flex-1 flex flex-col items-start gap-1 text-start">
+          <span class="type-overline tracking-[0.04em] text-on-surface-secondary">{{ 'home.access.email_label' | t }}</span>
+          <input
+            type="email"
+            name="contact[email]"
+            required
+            autocomplete="email"
+            inputmode="email"
+            spellcheck="false"
+            {% if described_by != blank %}aria-describedby="{{ described_by }}"{% endif %}
+            {% if form.errors %}aria-invalid="true" aria-errormessage="{{ form_id }}-error"{% endif %}
+            class="interest__input w-full h-12 bg-transparent border-0 px-0 type-body text-on-surface rounded-none"
+          >
+        </label>
+        {%- comment -%} A plain button: the 'button' block tag is only allowed in templates and layouts. {%- endcomment -%}
+        <button type="submit" class="interest__submit inline-flex items-center justify-center gap-2 cursor-pointer motion-safe:transition-[color,background-color,border-color,opacity,transform] motion-safe:active:scale-[0.97] h-12 shrink-0 ps-4 pe-0 bg-transparent text-on-surface type-overline tracking-[0.04em] font-bold hover:opacity-70">{{ 'home.access.submit' | t }} &rarr;</button>
+      </div>
+      {%- if form.errors -%}
+        <p id="{{ form_id }}-error" class="mt-3 type-body-sm text-on-surface" role="alert">{{ form.errors | default_errors }}</p>
+      {%- endif -%}
+      <p class="mt-4 text-xs leading-5 text-on-surface-secondary">
+        {{ 'home.access.consent' | t }}
+        {%- if shop.privacy_policy %} <a href="{{ shop.privacy_policy.url }}" class="text-on-surface underline underline-offset-2 hover:opacity-70">{{ 'home.access.privacy' | t }}</a>{% endif %}
+      </p>
+    {%- endif -%}
+  {%- endform -%}
+</s-submit-once>
+<script type="module" src="{{ 's-submit-once.js' | asset_url }}"></script>

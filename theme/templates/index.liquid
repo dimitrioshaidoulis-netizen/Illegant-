@@ -9,7 +9,15 @@
 
   assign women_url = collections['women'].url | default: routes.all_products_collection_url
   assign men_url = collections['men'].url | default: routes.all_products_collection_url
-  assign edit_url = collections['new-arrivals'].url | default: routes.all_products_collection_url
+  # The opening's call to action leads to the first edit once it has pieces; until then, to the private-access sign-up
+  # at the foot of this page, so no visitor lands in an empty room from the first button.
+  if collections['new-arrivals'].products_count > 0
+    assign edit_url = collections['new-arrivals'].url
+    assign edit_cta = 'home.hero.cta' | t
+  else
+    assign edit_url = '#private-access'
+    assign edit_cta = 'home.hero.cta_early' | t
+  endif
 
   assign women_alt = 'home.women.title' | t
   assign men_alt = 'home.men.title' | t
@@ -43,7 +51,7 @@
     <div class="campaign__copy">
       {% block 'text', variant: 'type-overline', class: 'campaign__line tracking-[0.04em]' %}{{ 'home.hero.title' | t }}{% endblock %}
       {% block 'text', tag: 'h2', variant: 'type-display', class: 'campaign__line campaign__heading', attributes: 'id="home-hero-heading"' %}{{ 'home.hero.heading' | t }}{% endblock %}
-      {% block 'link', url: edit_url, class: 'campaign__line campaign__cta no-underline min-h-0' %}{{ 'home.hero.cta' | t }}{% endblock %}
+      {% block 'link', url: edit_url, class: 'campaign__line campaign__cta no-underline min-h-0' %}{{ edit_cta }}{% endblock %}
     </div>
     {%- assign campaign_letters = 'footer.wordmark' | t | split: '' -%}
     <p class="campaign__wordmark" aria-hidden="true">{% for letter in campaign_letters %}<span class="campaign__letter" style="--i: {{ forloop.index0 }}">{{ letter }}</span>{% endfor %}</p>
@@ -90,7 +98,7 @@
     <div class="shrink-0 px-margin">
       <div class="mx-auto max-w-page flex items-end justify-between gap-6">
         {% block 'text', tag: 'h2', variant: 'type-heading-md', class: 'font-bold tracking-[0.02em] text-[clamp(0.9375rem,1vw,1.125rem)] leading-tight max-w-[16ch]', attributes: 'id="home-hero-heading"' %}{{ 'home.hero.heading' | t }}{% endblock %}
-        {% block 'link', url: edit_url, class: 'shrink-0 type-overline tracking-[0.04em] no-underline border-b border-on-surface pb-1.5 min-h-0 hover:opacity-70' %}{{ 'home.hero.cta' | t }}{% endblock %}
+        {% block 'link', url: edit_url, class: 'shrink-0 type-overline tracking-[0.04em] no-underline border-b border-on-surface pb-1.5 min-h-0 hover:opacity-70' %}{{ edit_cta }}{% endblock %}
       </div>
     </div>
   {% endblock %}
@@ -126,6 +134,7 @@
       {% block 'text', tag: 'h2', variant: 'type-display', class: 'rise font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,5vw,1.5rem)] md:text-[clamp(1.25rem,1.6vw,1.75rem)] text-surface' %}{{ 'home.women.title' | t }}{% endblock %}
       <div class="rise flex flex-wrap items-center gap-x-6 gap-y-2">
         {%- for sub in women_links -%}
+          {%- if sub.type == 'collection_link' and sub.object.all_products_count == 0 -%}{%- continue -%}{%- endif -%}
           <a href="{{ sub.url }}" class="pointer-events-auto type-overline tracking-[0.03em] no-underline text-surface/75 hover:text-surface border-b border-transparent hover:border-surface pb-0.5">{{ sub.title | escape }}</a>
         {%- endfor -%}
         {% block 'text', tag: 'span', variant: 'type-overline', class: 'tracking-[0.04em] text-surface border-b border-surface pb-1' %}{{ 'home.women.cta' | t }} &rarr;{% endblock %}
@@ -144,6 +153,7 @@
       {% block 'text', tag: 'h2', variant: 'type-display', class: 'rise font-bold leading-[1.15] tracking-[-0.01em] text-[clamp(1.25rem,5vw,1.5rem)] md:text-[clamp(1.25rem,1.6vw,1.75rem)] text-surface' %}{{ 'home.men.title' | t }}{% endblock %}
       <div class="rise flex flex-wrap items-center gap-x-6 gap-y-2">
         {%- for sub in men_links -%}
+          {%- if sub.type == 'collection_link' and sub.object.all_products_count == 0 -%}{%- continue -%}{%- endif -%}
           <a href="{{ sub.url }}" class="pointer-events-auto type-overline tracking-[0.03em] no-underline text-surface/75 hover:text-surface border-b border-transparent hover:border-surface pb-0.5">{{ sub.title | escape }}</a>
         {%- endfor -%}
         {% block 'text', tag: 'span', variant: 'type-overline', class: 'tracking-[0.04em] text-surface border-b border-surface pb-1' %}{{ 'home.men.cta' | t }} &rarr;{% endblock %}
@@ -178,7 +188,10 @@
             {% block 'text', tag: 'h2', variant: 'type-display', class: 'font-bold text-[clamp(1.125rem,1.4vw,1.5rem)] leading-[1.15] tracking-[-0.01em]' %}{{ 'home.reel.title' | t }}{% endblock %}
             {% block 'text', variant: 'type-body-sm', class: 'text-on-surface-secondary' %}{{ 'home.reel.body' | t }}{% endblock %}
           </div>
-          {% block 'link', url: featured_url, class: 'shrink-0 type-overline tracking-[0.04em] no-underline border-b border-on-surface pb-1.5 min-h-0 mb-1' %}{{ 'collections.view_all' | t }} &rarr;{% endblock %}
+          {%- comment -%} "View all" only once the edit has pieces; until then the section's own note says what is coming. {%- endcomment -%}
+          {%- if featured_collection.products_count > 0 -%}
+            {% block 'link', url: featured_url, class: 'shrink-0 type-overline tracking-[0.04em] no-underline border-b border-on-surface pb-1.5 min-h-0 mb-1' %}{{ 'collections.view_all' | t }} &rarr;{% endblock %}
+          {%- endif -%}
         </div>
       </div>
     </div>
@@ -260,7 +273,7 @@
   A native customer form subscribes the visitor to email marketing (tagged "private-access"), so no app is needed.
 {%- endcomment -%}
 {%- assign access_image = images['illegant-v2-woman-dark-room.jpg'] -%}
-{% block 'container', class: 'screen access relative isolate overflow-hidden bg-on-surface text-surface h-[calc(var(--vh)*100-var(--header-h))] min-h-[36rem]', attributes: 'aria-labelledby="home-access-heading"' %}
+{% block 'container', class: 'screen access relative isolate overflow-hidden bg-on-surface text-surface h-[calc(var(--vh)*100-var(--header-h))] min-h-[36rem]', attributes: 'id="private-access" aria-labelledby="home-access-heading"' %}
   <div class="dusk absolute inset-0 -z-10">
     {% block 'image', fallback_image: access_image, aspect_ratio: 'aspect-auto', class: 'absolute inset-0 h-full object-[45%_30%] md:object-[50%_30%]', sizes: '100vw', alt: '', attributes: 'loading="lazy"' %}{% endblock %}
   </div>
@@ -270,8 +283,9 @@
     {% block 'text', tag: 'h2', variant: 'type-display', class: 'font-bold text-[clamp(1.25rem,1.6vw,1.75rem)] leading-[1.15] tracking-[-0.01em] text-surface', attributes: 'id="home-access-heading"' %}{{ 'home.access.heading' | t }}{% endblock %}
     {% block 'text', variant: 'type-body', class: 'text-surface/80 max-w-[34ch]' %}{{ 'home.access.body' | t }}{% endblock %}
 
+    <s-submit-once class="block w-full" data-busy-label="{{ 'general.sending' | t | escape }}">
     {%- form 'customer', id: 'private-access-form', class: 'w-full pt-2' -%}
-      <input type="hidden" name="contact[tags]" value="newsletter, private-access">
+      <input type="hidden" name="contact[tags]" value="newsletter, private-access" data-campaign-tag>
       {%- if form.posted_successfully? -%}
         <p class="type-body text-surface" role="status">{{ 'home.access.success' | t }}</p>
       {%- else -%}
@@ -292,7 +306,9 @@
         </p>
       {%- endif -%}
     {%- endform -%}
+    </s-submit-once>
   </div>
 {% endblock %}
 </s-screen-lock>
 <script type="module" src="{{ 's-screen-lock.js' | asset_url }}"></script>
+<script type="module" src="{{ 's-submit-once.js' | asset_url }}"></script>

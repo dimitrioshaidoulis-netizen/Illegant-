@@ -183,7 +183,7 @@
                     <a href="{{ room_item.url }}" class="group/row grid grid-cols-[3rem_1fr_auto] md:grid-cols-[6rem_1fr_auto] items-baseline gap-4 md:gap-8 py-6 border-b border-border no-underline text-on-surface hover:border-on-surface motion-safe:transition-colors">
                       <span class="type-overline tracking-[0.03em] text-accent">0{{ forloop.index }}</span>
                       <span class="type-display font-bold text-[clamp(1.125rem,1.4vw,1.5rem)] leading-none tracking-[-0.01em] motion-safe:transition-transform motion-safe:duration-500 group-hover/row:translate-x-3 rtl:group-hover/row:-translate-x-3">{{ room_item.title | escape }}</span>
-                      <span class="type-overline tracking-[0.03em] text-on-surface-secondary">{{ 'collections.pieces_count' | t: count: room_item.products_count }}</span>
+                      <span class="type-overline tracking-[0.03em] text-on-surface-secondary">{% if room_item.products_count > 0 %}{{ 'collections.pieces_count' | t: count: room_item.products_count }}{% endif %}</span>
                     </a>
                   </li>
                 {%- endif -%}

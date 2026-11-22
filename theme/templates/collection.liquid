@@ -1,6 +1,12 @@
 {%- liquid
   # Whole-word handle matching for the room hand-off at the end: women-s-tops is women, men-s-knitwear is men.
   assign handle_words = collection.handle | split: '-'
+  # A room with nothing published yet shows no count, filters, sort or view switch: only what is coming and how to hear first.
+  # all_products_count ignores active filters, so a filtered-to-nothing room keeps its tools.
+  assign room_has_pieces = false
+  if collection.all_products_count > 0
+    assign room_has_pieces = true
+  endif
 -%}
 {% block 'container' %}
   {%- # theme-check-disable-next-line UnknownFilter %}
@@ -21,7 +27,9 @@
         {% if collection.description != blank %}
           <div class="richtext type-body-sm text-on-surface-secondary max-w-[46ch] line-clamp-2">{{ collection.description }}</div>
         {% endif %}
-        {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface-secondary' %}{{ 'collections.pieces_count' | t: count: collection.products_count }}{% endblock %}
+        {%- if room_has_pieces -%}
+          {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface-secondary' %}{{ 'collections.pieces_count' | t: count: collection.products_count }}{% endblock %}
+        {%- endif -%}
       </div>
     </div>
   </div>
@@ -48,19 +56,34 @@
         endif
       endfor
     -%}
-    {%- if room_parent and room_parent.links.size > 0 -%}
+    {%- liquid
+      # Tabs lead only to rooms with pieces (links to anything but a collection always stay), so no tab opens an empty room.
+      assign room_tab_count = 0
+      if room_parent
+        for sub in room_parent.links
+          if sub.type != 'collection_link' or sub.object.all_products_count > 0
+            assign room_tab_count = room_tab_count | plus: 1
+          endif
+        endfor
+      endif
+    -%}
+    {%- if room_tab_count > 1 -%}
       <nav class="flex gap-x-7 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden pt-5 pb-2 -mx-margin px-margin" aria-label="{{ room_parent.title | escape }}">
         {%- for sub in room_parent.links -%}
+          {%- if sub.type == 'collection_link' and sub.object.all_products_count == 0 -%}{%- continue -%}{%- endif -%}
           <a href="{{ sub.url }}" class="shrink-0 type-overline tracking-[0.04em] no-underline pb-3 -mb-px border-b {% if sub.url == collection.url %}border-on-surface text-on-surface{% else %}border-transparent text-on-surface-secondary hover:text-on-surface{% endif %} motion-safe:transition-colors"{% if sub.url == collection.url %} aria-current="page"{% endif %}>{{ sub.title | escape }}</a>
         {%- endfor -%}
       </nav>
     {%- endif -%}
+    {%- if room_has_pieces -%}
     <div class="flex items-center justify-end gap-6 pt-6 pb-2" role="group" aria-label="{{ 'collections.view_label' | t | escape }}">
       <button type="button" data-view-option="wall" aria-pressed="true" class="type-overline tracking-[0.03em] cursor-pointer min-h-touch-target text-on-surface-secondary aria-pressed:text-on-surface aria-pressed:underline underline-offset-8 hover:text-on-surface motion-safe:transition-colors">{{ 'collections.view_wall' | t }}</button>
       <span class="h-3 w-px bg-border" aria-hidden="true"></span>
       <button type="button" data-view-option="index" aria-pressed="false" class="type-overline tracking-[0.03em] cursor-pointer min-h-touch-target text-on-surface-secondary aria-pressed:text-on-surface aria-pressed:underline underline-offset-8 hover:text-on-surface motion-safe:transition-colors">{{ 'collections.view_index' | t }}</button>
     </div>
+    {%- endif -%}
   </div>
+{%- if room_has_pieces -%}
 <s-live-form class="block" partial="collection-count,collection-chips,collection-filters,collection-grid" debounce="300" data-collection-id="{{ collection.id }}" data-collection-handle="{{ collection.handle | escape }}" data-updated-message="{{ 'accessibility.results_updated' | t }}" data-error-message="{{ 'accessibility.update_error' | t }}">
   <form action="{{ collection.url }}" method="get" role="search" aria-label="{{ 'collections.filter' | t }}">
     {% capture collection_filter_trigger %}
@@ -241,23 +264,37 @@
       {% block 'pagination', paginate: paginate %}{% endblock %}
     </div>
   {% else %}
-    {% if collection.products_count == 0 %}
-      <div class="max-w-page mx-auto px-margin py-24 text-center">
-        {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface-secondary' %}{{ 'collections.empty.label' | t }}{% endblock %}
-        {% block 'text', tag: 'h2', class: 'mt-4 font-heading text-[clamp(1.25rem,2vw,2rem)] leading-tight' %}{{ 'collections.empty.heading' | t }}{% endblock %}
-        {% block 'text', variant: 'type-body', class: 'text-on-surface-secondary max-w-[46ch] mx-auto mt-4' %}{{ 'collections.empty.body' | t }}{% endblock %}
-        {%- if pages['faq'] != blank -%}
-          <a href="{{ pages['faq'].url }}" class="inline-flex mt-6 items-center gap-2 border-b border-current pb-1 type-overline tracking-[0.04em] no-underline text-on-surface hover:opacity-70">{{ 'collections.empty.faq' | t }} <span aria-hidden="true">→</span></a>
-        {%- endif -%}
-      </div>
-    {% else %}
-      {% block 'text', variant: 'type-body', class: 'text-on-surface-secondary py-24 text-center max-w-page mx-auto px-margin' %}{{ 'collections.no_products' | t }}{% endblock %}
-    {% endif %}
+    {%- comment -%} Only reachable when filters narrow a room with pieces to nothing; an empty room renders below, outside the form. {%- endcomment -%}
+    {% block 'text', variant: 'type-body', class: 'text-on-surface-secondary py-24 text-center max-w-page mx-auto px-margin' %}{{ 'collections.no_products' | t }}{% endblock %}
   {% endif %}
 {% endpaginate %}
     {% endpartial %}
   </form>
 </s-live-form>
+{%- else -%}
+  {%- comment -%}
+    Empty room (nothing published yet): what is coming, then the next useful step — leave an email for this room,
+    or read the FAQ. Kept outside the filter form so the sign-up is its own form.
+  {%- endcomment -%}
+  {%- capture empty_note_id -%}collection-interest-note-{{ collection.id }}{%- endcapture -%}
+  {%- capture empty_form_id -%}collection-interest-{{ collection.id }}{%- endcapture -%}
+  {%- capture empty_note_attributes -%}id="{{ empty_note_id }}"{%- endcapture -%}
+  {%- capture empty_tags -%}newsletter, private-access, interest-{{ collection.handle }}{%- endcapture -%}
+  <div class="max-w-page mx-auto px-margin py-16 md:py-14 text-center">
+    <div class="interest-room mx-auto">
+      {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface-secondary' %}{{ 'collections.empty.label' | t }}{% endblock %}
+      {% block 'text', tag: 'h2', class: 'mt-4 font-heading text-[clamp(1.25rem,2vw,2rem)] leading-tight' %}{{ 'collections.empty.heading' | t }}{% endblock %}
+      {% block 'text', variant: 'type-body', class: 'text-on-surface-secondary max-w-[46ch] mx-auto mt-4' %}{{ 'collections.empty.body' | t }}{% endblock %}
+      {% block 'text', variant: 'type-body', class: 'text-on-surface max-w-[46ch] mx-auto mt-8', attributes: empty_note_attributes %}{{ 'collections.empty.notify' | t }}{% endblock %}
+      <div class="mt-6">
+        {% render 'interest-form', form_id: empty_form_id, tags: empty_tags, described_by: empty_note_id %}
+      </div>
+      {%- if pages['faq'] != blank -%}
+        <a href="{{ pages['faq'].url }}" class="inline-flex mt-8 items-center gap-2 border-b border-current pb-1 type-overline tracking-[0.04em] no-underline text-on-surface hover:opacity-70">{{ 'collections.empty.faq' | t }}</a>
+      {%- endif -%}
+    </div>
+  </div>
+{%- endif -%}
 </s-view-switch>
 </s-view-event>
 
