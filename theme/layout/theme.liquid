@@ -113,7 +113,12 @@
           {%- endcomment -%}
           {% partial 'cart-count' %}
             {%- comment -%} The label carries the live count so the trigger stays correctly named for assistive tech after each partial swap. {%- endcomment -%}
-            {%- capture cart_button_attrs -%}id="header-cart-trigger" aria-label="{{ 'cart.icon_label' | t: count: cart.item_count | escape }}"{%- endcapture -%}
+            {%- comment -%}
+              The accessible name starts with the words on screen ("Bag 00"), so voice control ("tap Bag 00") reaches the
+              button, then says the count in words. The visible spans below are aria-hidden; keep the two in step.
+            {%- endcomment -%}
+            {%- capture cart_count_padded -%}{% if cart.item_count < 10 %}0{% endif %}{{ cart.item_count }}{%- endcapture -%}
+            {%- capture cart_button_attrs -%}id="header-cart-trigger" aria-label="{{ 'header.bag' | t | escape }} {{ cart_count_padded }}, {{ 'cart.item_count' | t: count: cart.item_count | escape }}"{%- endcapture -%}
             {% block 'button',
               commandfor: 'cart-drawer',
               command: 'show-modal',
