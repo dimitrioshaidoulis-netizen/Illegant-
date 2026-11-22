@@ -211,8 +211,18 @@
             </li>
           {% endfor %}
         </ul>
+      {%- elsif request.design_mode == false -%}
+        {%- comment -%}
+          Visitors never see invented pieces. Until the collection holds real, published products, the spread says so
+          in the same words as an empty collection page (collections.empty.*).
+        {%- endcomment -%}
+        <div class="flex h-full flex-col justify-center gap-4 py-12 md:py-14 md:ps-14">
+          {% block 'text', variant: 'type-overline', class: 'tracking-[0.04em] text-on-surface-secondary' %}{{ 'collections.empty.label' | t }}{% endblock %}
+          {% block 'text', tag: 'p', variant: 'type-display', class: 'font-bold text-[clamp(1.125rem,1.4vw,1.5rem)] leading-[1.15] tracking-[-0.01em] text-on-surface max-w-[22ch]' %}{{ 'collections.empty.heading' | t }}{% endblock %}
+          {% block 'text', variant: 'type-body-sm', class: 'text-on-surface-secondary max-w-[46ch]' %}{{ 'collections.empty.body' | t }}{% endblock %}
+        </div>
       {%- else -%}
-        {%- comment -%} Placeholder pieces remain selectable before the collection has products. {%- endcomment -%}
+        {%- comment -%} Theme editor only: placeholder pieces remain selectable before the collection has products. {%- endcomment -%}
         <ul role="list" class="grid grid-cols-2 gap-x-3 md:gap-x-6 gap-y-12">
           {% for placeholder_index in (1..4) %}
             <li class="{% cycle '', 'md:translate-y-20' %}" style="--i: {{ forloop.index0 }}">

@@ -268,7 +268,8 @@
         {%- unless current_variant.available -%}
           {%- assign notify_form_id = 'notify-form-' | append: product.id -%}
           {%- form 'customer', id: notify_form_id, class: 'mt-6 pt-6 border-t border-border' -%}
-            <input type="hidden" name="contact[tags]" value="notify-me, interest-{{ product.handle }}">
+            {%- comment -%} Tags count interest per piece and, for pieces with sizes or colours, per variant (interest-<handle>-<variant>). {%- endcomment -%}
+            <input type="hidden" name="contact[tags]" value="notify-me, interest-{{ product.handle }}{% unless product.has_only_default_variant %}, interest-{{ product.handle }}-{{ current_variant.title | handleize }}{% endunless %}">
             {%- if form.posted_successfully? -%}
               <p class="type-body-sm text-on-surface" role="status">{{ 'product.notify.success' | t }}</p>
             {%- else -%}

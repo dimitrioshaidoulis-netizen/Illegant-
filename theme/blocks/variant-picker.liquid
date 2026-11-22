@@ -70,9 +70,14 @@
           {%- if value.variant.available == false -%}
             {%- assign variant_unavailable = true -%}
           {%- endif -%}
+          {%- comment -%} A sold-out value stays selectable so the shopper can register interest in it (Notify me); only a combination with no variant is disabled. {%- endcomment -%}
+          {%- assign variant_missing = false -%}
+          {%- if value.variant == blank -%}
+            {%- assign variant_missing = true -%}
+          {%- endif -%}
           {%- render 'swatch', name: option.name, value: value, swatch: value.swatch,
             selected: value.selected, unavailable: variant_unavailable,
-            disabled: variant_unavailable, data_variant_id: value.variant.id,
+            disabled: variant_missing, data_variant_id: value.variant.id,
             size: size, shape: shape -%}
         {%- endfor -%}
       </div>
@@ -95,7 +100,16 @@
         {%- for value in option.values -%}
           {%- assign input_id = form_id | append: '-' | append: option.name | handleize | append: '-' | append: value | handleize -%}
           {%- assign variant_available = value.variant.available -%}
-          <label class="relative motion-safe:transition-transform motion-safe:active:scale-[0.97]{% if variant_available %} cursor-pointer{% else %} opacity-50 cursor-not-allowed pointer-events-none{% endif %}" for="{{ input_id }}">
+          {%- comment -%}
+            Sold-out values stay selectable: choosing one shows the sold-out button and the Notify me form for that exact
+            variant. Only a combination with no variant at all is disabled. data-unavailable drives the struck-through look
+            (assets/illegant-flagship.css, section 3).
+          {%- endcomment -%}
+          {%- assign variant_missing = false -%}
+          {%- if value.variant == blank -%}
+            {%- assign variant_missing = true -%}
+          {%- endif -%}
+          <label class="relative motion-safe:transition-transform motion-safe:active:scale-[0.97]{% if variant_missing %} opacity-50 cursor-not-allowed pointer-events-none{% else %} cursor-pointer{% endif %}"{% unless variant_available %} data-unavailable{% endunless %} for="{{ input_id }}">
             <input
               type="radio"
               name="{{ option.name | escape }}"
@@ -104,7 +118,7 @@
               class="peer sr-only"
               data-variant-id="{{ value.variant.id }}"
               {% if value.selected %}checked{% endif %}
-              {% unless variant_available %}disabled{% endunless %}>
+              {% if variant_missing %}disabled{% endif %}>
             <span class="inline-flex items-center px-3 py-1.5 text-sm border {{ radius }} cursor-pointer
               {% if variant_available == false %}border-on-surface{% else %}border-border{% endif %} text-on-surface
               peer-not-checked:hover:bg-surface-secondary

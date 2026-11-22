@@ -159,14 +159,14 @@ s-variant-picker fieldset input:checked + span.inline-flex {
   color: var(--color-surface);
 }
 /* Unavailable sizes: struck-through label instead of a diagonal line across the box. */
-s-variant-picker fieldset label.cursor-not-allowed > span.inline-flex {
+s-variant-picker fieldset label:is(.cursor-not-allowed, [data-unavailable]) > span.inline-flex {
   color: var(--color-on-surface-secondary);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
 s-variant-picker fieldset label > span.inline-flex > span[aria-hidden="true"] { display: none; }
 /* A selected size that cannot be bought is outlined, never filled: a filled box reads as "ready to add". */
-s-variant-picker fieldset label.cursor-not-allowed > input:checked + span.inline-flex {
+s-variant-picker fieldset label:is(.cursor-not-allowed, [data-unavailable]) > input:checked + span.inline-flex {
   border-color: var(--color-on-surface);
   background: transparent;
   color: var(--color-on-surface-secondary);
@@ -513,4 +513,17 @@ html:has([data-password-page]) { scrollbar-gutter: auto; background: var(--color
     min-height: calc(var(--vh) * 100 - var(--header-h));
   }
   s-screen-lock > .access > .lines { height: auto; flex: 1 0 auto; }
+}
+
+/* ---------- 13. Commerce: touch targets in the bag (22 November 2026) --------------------------------------
+   The quantity - and + buttons in the bag drawer were 32px squares (size-8 in the compact line of
+   snippets/cart-line-item.liquid): below the 44px touch target and easy to miss with a thumb next to the number. On touch
+   screens every quantity button gets at least a 44px hit area (the bag page's were already 44px and do not change);
+   the visible icon stays the same and the row's rhythm is kept by negative block margins. */
+@media (pointer: coarse) {
+  button[command="--update-quantity"] {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    margin-block: -0.375rem;
+  }
 }
